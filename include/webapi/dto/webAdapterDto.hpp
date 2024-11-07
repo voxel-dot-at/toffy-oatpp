@@ -4,7 +4,6 @@
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/Types.hpp"
 
-#include "measurement.hpp"
 
 #include OATPP_CODEGEN_BEGIN(DTO)
 

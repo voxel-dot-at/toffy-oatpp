@@ -4,7 +4,6 @@
 #include <opencv2/highgui.hpp>
 
 #include "globals.hpp"
-#include "util.hpp"
 
 #include "webapi/filters/webAdapter.hpp"
 
@@ -16,6 +15,10 @@
 using namespace std;
 using namespace toffy::webapi;
 
+
+extern SystemState theState;
+
+
 bool init_toffy_web()
 {
     toffy::FilterFactory* ff = toffy::FilterFactory::getInstance();
@@ -24,21 +27,6 @@ bool init_toffy_web()
 
     return true;
 }
-
-
-std::vector<std::string> ids = {"1234", "12345", "132456", "1234455"};
-int idx = 0;
-
-
-toffy::detection::Measurement* newMeas()
-{
-    toffy::detection::Measurement* m = new toffy::detection::Measurement();
-    m->avgH = idx / 1.23;
-    m->id = ids[idx++];
-    m->state = toffy::detection::Measurement::success;
-    return m;
-}
-
 
 /**
  *  main
@@ -51,21 +39,15 @@ int main(int argc, const char* argv[])
 
     toffy::webapi::WebAdapter* webAdap = new toffy::webapi::WebAdapter();
 
-    theState.store.add(newMeas());
-    theState.store.add(newMeas());
-    theState.store.add(newMeas());
-    theState.store.print();
-
     toffy::Player* player;
     player = new toffy::Player(boost::log::trivial::debug, false);
     player->loadConfig("xml/oatpp.xml");
 
     player->filterBank()->add(webAdap);
 
-    SystemState state;
     setupFilterBank(state,player->filterBank());
 
-    webAppStart(webAdap, &state);
+    webAppStart(webAdap, &theState);
 
     bool keepRunning = true;
     int delay = 1;

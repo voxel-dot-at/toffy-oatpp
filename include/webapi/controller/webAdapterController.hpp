@@ -10,8 +10,6 @@
 #include "oatpp/web/protocol/http/outgoing/MultipartBody.hpp"
 #include "oatpp/base/Log.hpp"
 
-#include "webapi/dto/testDto.hpp"
-#include "webapi/dto/measurementDto.hpp"
 #include "webapi/dto/webAdapterDto.hpp"
 
 #include "oatpp/data/resource/Resource.hpp"
