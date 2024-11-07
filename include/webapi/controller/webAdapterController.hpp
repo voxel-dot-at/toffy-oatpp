@@ -67,21 +67,6 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, "released");
     }
 
-    ENDPOINT("GET", "/api/fr2", getFr2)
-    {
-        OATPP_LOGd("Test", "api/fr2");
-        if (!webAdap) {
-            return createResponse(Status::CODE_404, "no web adapter");
-        }
-        OATPP_LOGd("Test", "api/fr2 noti");
-        toffy::Frame f;
-        webAdap->sharedMat=&f;
-        webAdap->shared_lock.lock();
-        sleep(10);
-        webAdap->shared_lock.unlock();
-        webAdap->shared_cv.notifyAll();
-        OATPP_LOGd("Test", "api/fr2 noted");
-    }
 
     ENDPOINT("GET", "/api/frame", getFrameInfo)
     {

@@ -6,17 +6,14 @@
 
 #include "oatpp-swagger/Controller.hpp"
 
-#include "webapi/controller/webController.hpp"
-#include "webapi/controller/measurementController.hpp"
+#include "webapi/controller/staticContentsController.hpp"
 #include "webapi/controller/btaAdapterController.hpp"
 #include "webapi/controller/webAdapterController.hpp"
-#include "webapi/controller/wBoxController.hpp"
 #include "webapi/filters/webAdapter.hpp"
 #include "webapi/webAppComponent.hpp"
 #include "webapi/swaggerComponent.hpp"
 
 #include "globals.hpp"
-
 
 static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;
@@ -41,12 +38,6 @@ static void run()
      * REGISTER CONTORLLERS
      */
 
-    docEndpoints.append(
-        router->addController(std::make_shared<MeasurementController>())
-            ->getEndpoints());
-
-    // router->addController(std::make_shared<MeasurementController>());
-
     auto webAdapCtrl = std::make_shared<WebAdapterController>();
     webAdapCtrl->registerCallbacks(webAdap);
     router->addController(webAdapCtrl);
@@ -60,16 +51,13 @@ static void run()
     docEndpoints.append(btaAdapCtrl->getEndpoints());
 
 
-    auto wBoxCtrl = std::make_shared<WBoxController>();
-    router->addController(wBoxCtrl);
-    docEndpoints.append(wBoxCtrl->getEndpoints());
-
-    // if (theState.enableSwagger) { ...
-    router->addController(oatpp::swagger::Controller::createShared(docEndpoints));
-    // ...}
+    if (theState.enableSwaggerUi) {
+        router->addController(
+            oatpp::swagger::Controller::createShared(docEndpoints));
+    }
 
     // static contents:
-    router->addController(std::make_shared<WebController>());
+    router->addController(std::make_shared<StaticContentsController>());
 
     /***
      * /REGISTER CONTORLLERS
@@ -119,7 +107,6 @@ static int theMainLoop()
 
     return 0;
 }
-
 
 void webAppStart(toffy::webapi::WebAdapter* webAdapter, SystemState* state)
 {

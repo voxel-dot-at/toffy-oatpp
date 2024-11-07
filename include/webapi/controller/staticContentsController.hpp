@@ -1,9 +1,6 @@
 #ifndef WEB_CONTROLLER_HPP
 #define WEB_CONTROLLER_HPP
 
-#include "webapi/dto/testDto.hpp"
-#include "webapi/dto/measurementDto.hpp"
-
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
