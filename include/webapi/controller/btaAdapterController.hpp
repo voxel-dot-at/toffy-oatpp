@@ -61,8 +61,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createDtoResponse(Status::CODE_200, populateBtaSettingsDTO(*s));
     }
 
-    inline BtaSettingsDTO::Wrapper populateBtaSettingsDTO(BtaWrapper& bta) {
-
+    inline BtaSettingsDTO::Wrapper populateBtaSettingsDTO(BtaWrapper& bta)
+    {
         auto dto = BtaSettingsDTO::createShared();
         // populateBtaSettings(dto);
 
@@ -90,9 +90,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         BtaWrapper* s = bta->getSensor();
 
         oatpp::Int32 tt = s->getIntegrationTime();
-        oatpp::String json = mapper.writeToString(tt);
 
-        return createResponse(Status::CODE_200, json);
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("POST", "/api/bta/integrationTime", setIntegrationTime,
@@ -102,17 +101,19 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
-        int t = time;
-        if (time > 0) {
-            BtaWrapper* s = bta->getSensor();
 
-            t = s->setIntegrationTime((unsigned int)t);
+        BtaWrapper* s = bta->getSensor();
+        if (time > 0) {
+            int result = s->setIntegrationTime((unsigned int)time);
+
+            if (result == 0) {
+                return createResponse(Status::CODE_406,
+                                      "Invalid integration time");
+            }
         }
 
-        oatpp::Int32 tt = t;
-        oatpp::String json = mapper.writeToString(tt);
-
-        return createResponse(Status::CODE_200, json);
+        oatpp::Int32 tt = s->getIntegrationTime();
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("GET", "/api/bta/frameRate", getFrameRate)
@@ -125,28 +126,28 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         BtaWrapper* s = bta->getSensor();
 
         oatpp::Float32 tt = s->getFrameRate();
-        oatpp::String json = mapper.writeToString(tt);
 
-        return createResponse(Status::CODE_200, json);
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("POST", "/api/bta/frameRate", setFrameRate, QUERY(Float32, rate))
     {
-        OATPP_LOGd("BTA", "api/bta/frameRate S {}", rate);
+        OATPP_LOGd("BTA", "api/bta/frameRate P {}", rate);
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
-        int t = 0;
-        if (rate > 0) {
-            BtaWrapper* s = bta->getSensor();
 
-            t = s->setFrameRate((unsigned int)rate);
+        BtaWrapper* s = bta->getSensor();
+        if (rate > 0) {
+            int result = s->setFrameRate((unsigned int)rate);
+
+            if (result == 0) {
+                return createResponse(Status::CODE_406, "Invalid frame rate");
+            }
         }
 
-        oatpp::Int32 tt = t;
-        oatpp::String json = mapper.writeToString(tt);
-
-        return createResponse(Status::CODE_200, json);
+        oatpp::Int32 tt = s->getFrameRate();
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("GET", "/api/bta/modulationFrequency", getModulationFrequency)
@@ -155,39 +156,39 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
-        
+
         BtaWrapper* s = bta->getSensor();
 
         oatpp::Int32 tt = s->getModulationFrequency();
-        oatpp::String json = mapper.writeToString(tt);
 
-        return createResponse(Status::CODE_200, json);
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("POST", "/api/bta/modulationFrequency", setModulationFrequency,
              QUERY(Float32, freq))
     {
-        OATPP_LOGd("BTA", "api/bta/modulationFrequency G {}", time);
+        OATPP_LOGd("BTA", "api/bta/modulationFrequency P {}", time);
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
-        int t = 0;
-        if (freq > 0) {
-            BtaWrapper* s = bta->getSensor();
 
-            t = s->setModulationFrequency((unsigned int)freq);
+        BtaWrapper* s = bta->getSensor();
+        if (freq > 0) {
+            int result = s->setModulationFrequency((unsigned int)freq);
+
+            if (result == 0) {
+                return createResponse(Status::CODE_406,
+                                      "Invalid modulation frequency");
+            }
         }
 
-        oatpp::Int32 tt = t;
-        oatpp::String json = mapper.writeToString(tt);
-
-        return createResponse(Status::CODE_200, json);
+        oatpp::Int32 tt = s->getModulationFrequency();
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
-
 
     ENDPOINT("GET", "/api/bta/globalOffset", getGlobalOffset)
     {
-        OATPP_LOGd("BTA", "api/bta/modulationFrequency G {}", time);
+        OATPP_LOGd("BTA", "api/bta/globalOffset G {}", time);
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
@@ -196,30 +197,29 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
         // nb. conversion down to int - this was in meters for old cameras, now it is mm
         oatpp::Int32 tt = s->getGlobalOffset();
-        oatpp::String json = mapper.writeToString(tt);
 
-        return createResponse(Status::CODE_200, json);
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
     ENDPOINT("POST", "/api/bta/globalOffset", setGlobalOffset,
              QUERY(Float32, offset))
     {
-        OATPP_LOGd("BTA", "api/bta/modulationFrequency G {}", time);
+        OATPP_LOGd("BTA", "api/bta/globalOffet P {}", time);
         if (!bta) {
             return createResponse(Status::CODE_404, "no bta");
         }
-        int t = 0;
 
         BtaWrapper* s = bta->getSensor();
 
-        t = s->setGlobalOffset(offset);
+        int result = s->setGlobalOffset(offset);
 
-        oatpp::Int32 tt = t;
-        oatpp::String json = mapper.writeToString(tt);
+        if (result == 0) {
+            return createResponse(Status::CODE_406, "Invalid global offset");
+        }
 
-        return createResponse(Status::CODE_200, json);
+        oatpp::Int32 tt = s->getGlobalOffset();
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
-
 
     ENDPOINT("GET", "/api/bta/reg/{addr}", getRegister, PATH(String, addr))
     {
@@ -232,11 +232,10 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
         std::string a = addr;
         unsigned int reg = atoi(a.c_str());
-        unsigned int val =s->readRegister(reg);
+        unsigned int val = s->readRegister(reg);
         oatpp::Int32 tt = val;
-        oatpp::String json = mapper.writeToString(tt);
 
-        return createResponse(Status::CODE_200, json);
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
    private:
