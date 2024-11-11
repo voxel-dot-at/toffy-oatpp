@@ -18,12 +18,13 @@
 namespace toffy {
 namespace oatpp {
 
-
 /** data listener super class; implements thread sync artefacts */
-class WebListener {
+class WebListener
+{
     std::string n;
-    public:
-    WebListener(const std::string& name) : n(name) {} 
+
+   public:
+    WebListener(const std::string& name) : n(name) {}
 
     const std::string& name() const { return n; }
 
@@ -34,7 +35,8 @@ class WebListener {
     void haveWork(const Frame& in);
 
     bool valid;
-protected:
+
+   protected:
     std::mutex m;
     std::condition_variable workToDo;
 
@@ -44,35 +46,37 @@ protected:
     virtual bool process(const Frame& in) = 0;
 };
 
+class FrameInfoListener : public WebListener
+{
+   public:
+    FrameInfoListener(const std::string& name) : WebListener(name) {}
 
-class FrameInfoListener: public WebListener {
-    public:
-    FrameInfoListener(const std::string& name): WebListener(name) {}
+    // std::vector<std::string> keys;
+    std::vector<Frame::SlotInfo> slots;
 
-    // std::vector<std::string> keys; 
-    std::vector<Frame::SlotInfo> slots; 
-
-protected:
+   protected:
     virtual bool process(const Frame& in);
 };
 
-class ImgListener: public WebListener {
-    public:
-    ImgListener(const std::string& name): WebListener(name) {}
+class ImgListener : public WebListener
+{
+   public:
+    ImgListener(const std::string& name) : WebListener(name) {}
 
-    boost::shared_ptr<std::string> strVal; 
+    boost::shared_ptr<std::string> strVal;
 
-protected:
+   protected:
     virtual bool process(const Frame& in);
 };
 
-class NumberListener: public WebListener {
-    public:
-    NumberListener(const std::string& name): WebListener(name) {}
+class NumberListener : public WebListener
+{
+   public:
+    NumberListener(const std::string& name) : WebListener(name) {}
 
     long numVal;
 
-protected:
+   protected:
     virtual bool process(const Frame& in);
 };
 

@@ -28,11 +28,12 @@ bool init_toffy_web()
     return true;
 }
 
-void setupGlobalState(SystemState &state, Player* player)
+void setupGlobalState(SystemState &state, Player *player)
 {
     state.player = player;
 
-    state.enableSwaggerUi = getenv("WEBAPI") ? getenv("WEBAPI")[0] == '1' : true; 
+    state.enableSwaggerUi =
+        getenv("WEBAPI") ? getenv("WEBAPI")[0] == '1' : true;
 
     FilterBank *fb = player->filterBank();
 
@@ -47,7 +48,8 @@ void setupGlobalState(SystemState &state, Player* player)
             theState.bta = c;
         }
         if (vec.size() == 0) {
-            cout << "WARNING! NO FILTER TYPE  " << BTA_NAME << " FOUND!" << endl;
+            cout << "WARNING! NO FILTER TYPE  " << BTA_NAME << " FOUND!"
+                 << endl;
         }
     }
 }
@@ -71,7 +73,6 @@ int main(int argc, const char *argv[])
 
     init_toffy_web();
 
-
     toffy::Player *player;
     player = new toffy::Player(boost::log::trivial::debug, false);
 
@@ -86,7 +87,6 @@ int main(int argc, const char *argv[])
 
     webAppStart(webAdap, &theState);
     // /web api
-
 
     bool keepRunning = true;
     int delay = 1;

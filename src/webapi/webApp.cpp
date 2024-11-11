@@ -50,7 +50,6 @@ static void run()
     router->addController(btaAdapCtrl);
     docEndpoints.append(btaAdapCtrl->getEndpoints());
 
-
     if (theState.enableSwaggerUi) {
         router->addController(
             oatpp::swagger::Controller::createShared(docEndpoints));

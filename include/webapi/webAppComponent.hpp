@@ -18,11 +18,10 @@
 class AppComponent
 {
    public:
-
-  /**
+    /**
    *  Swagger component
    */
-  SwaggerComponent swaggerComponent;
+    SwaggerComponent swaggerComponent;
 
     /**
    *  Create ConnectionProvider component which listens on the port

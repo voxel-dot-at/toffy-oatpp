@@ -54,7 +54,6 @@ class WebAdapter : public Filter
 
     std::vector<WebListener*> nexties;
 
-
     // shared resource: new frame ...
 
     Frame* sharedMat;

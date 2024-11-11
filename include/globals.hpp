@@ -26,7 +26,6 @@ class SystemState
 
     toffy::Player *player = nullptr;
     toffy::capturers::Bta *bta = nullptr;
-
 };
 
 extern SystemState theState;

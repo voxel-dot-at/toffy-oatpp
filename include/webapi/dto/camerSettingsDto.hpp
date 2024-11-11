@@ -12,16 +12,14 @@
  *  Data Transfer Object. Object containing fields only.
  *  Used in API for serialization/deserialization and validation
  */
-class CameraSettings : public oatpp::DTO {
-  
-  DTO_INIT(CameraSettings, DTO)
-  
-  DTO_FIELD(Int32, fc);
+class CameraSettings : public oatpp::DTO
+{
+    DTO_INIT(CameraSettings, DTO)
 
-  DTO_FIELD(Int32, fc1);
+    DTO_FIELD(Int32, fc);
 
+    DTO_FIELD(Int32, fc1);
 };
-
 
 #include OATPP_CODEGEN_END(DTO)
 

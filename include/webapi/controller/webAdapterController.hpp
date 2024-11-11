@@ -60,13 +60,14 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
         {
             oatpp::async::LockGuard guard(&webAdap->shared_lock);
 
-            webAdap->shared_cv.wait(guard, [this]() noexcept { return webAdap->sharedMat != nullptr; });
+            webAdap->shared_cv.wait(guard, [this]() noexcept {
+                return webAdap->sharedMat != nullptr;
+            });
         }
         OATPP_LOGd("Test", "api/fr waited");
 
         return createResponse(Status::CODE_200, "released");
     }
-
 
     ENDPOINT("GET", "/api/frame", getFrameInfo)
     {

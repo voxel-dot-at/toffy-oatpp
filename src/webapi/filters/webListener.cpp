@@ -22,8 +22,6 @@ using namespace std;
 
 static const bool doVisu = false;
 
-
-
 oatpp::async::Action WebListener::waitForWork()
 {
     cout << "WAIT " << name() << endl;
