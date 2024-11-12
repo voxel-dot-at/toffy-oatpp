@@ -231,9 +231,32 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         BtaWrapper* s = bta->getSensor();
 
         std::string a = addr;
-        unsigned int reg = atoi(a.c_str());
+        char* endptr = NULL;
+        long int reg = strtol(a.c_str(), &endptr, 0);
         unsigned int val = s->readRegister(reg);
         oatpp::Int32 tt = val;
+
+        return createResponse(Status::CODE_200, mapper.writeToString(tt));
+    }
+
+    ENDPOINT("POST", "/api/bta/reg/{addr}", postRegister, PATH(String, addr),
+             QUERY(String, value))
+    {
+        OATPP_LOGd("BTA", "api/bta/reg P");
+
+        if (!bta) {
+            return createResponse(Status::CODE_404, "no bta");
+        }
+        BtaWrapper* s = bta->getSensor();
+
+        std::string a = addr;
+        std::string v = value;
+        char* endptr = NULL;
+        long int reg = strtol(a.c_str(), &endptr, 0);
+        long int val = strtol(v.c_str(), &endptr, 0);
+        s->writeRegister(reg, val);
+        unsigned int vv = s->readRegister(reg);
+        oatpp::Int32 tt = vv;
 
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
