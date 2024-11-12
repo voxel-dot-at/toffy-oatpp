@@ -14,11 +14,34 @@ class BtaSettingsDTO : public oatpp::DTO
 {
     DTO_INIT(BtaSettingsDTO, DTO);
 
+    DTO_FIELD_INFO(connected)
+    {
+        info->description = "Indicates whether the camera is currently connected";
+    }
     DTO_FIELD(Boolean, connected);
 
+    DTO_FIELD_INFO(integrationTime)
+    {
+        info->description = "The integration time in microseconds (µs)";
+    }
     DTO_FIELD(UInt32, integrationTime);
+
+    DTO_FIELD_INFO(modulationFrequency)
+    {
+        info->description = "The modulation frequency in hertz (Hz)";
+    }
     DTO_FIELD(UInt32, modulationFrequency);
+
+    DTO_FIELD_INFO(frameRate)
+    {
+        info->description = "The current frame rate in frames per second (fps)";
+    }
     DTO_FIELD(Float32, frameRate);
+
+    DTO_FIELD_INFO(globalOffset)
+    {
+        info->description = "Provides the additive offset values (DistOffset0, DistOffset1, DistOffset2, DistOffset3) in hexadecimal format";
+    }
     DTO_FIELD(Float32, globalOffset);
 };
 

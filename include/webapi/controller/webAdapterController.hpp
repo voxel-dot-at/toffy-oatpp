@@ -49,6 +49,11 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
     void registerCallbacks(toffy::webapi::WebAdapter* webApi);
 
    public:
+    ENDPOINT_INFO(getFr)
+    {
+        info->summary = "Get FR";
+        info->description = "Get FR";
+    }
     ENDPOINT("GET", "/api/fr", getFr)
     {
         OATPP_LOGd("Test", "api/fr");
@@ -69,6 +74,11 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, "released");
     }
 
+    ENDPOINT_INFO(getFrameInfo)
+    {
+        info->summary = "Get Frame Info";
+        info->description = "Get Frame Info";
+    }
     ENDPOINT("GET", "/api/frame", getFrameInfo)
     {
         OATPP_LOGd("Test", "api/frame");
@@ -127,6 +137,11 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
 
     std::map<std::string, toffy::webapi::WebListener*> lisis;
 
+    ENDPOINT_INFO(getImage)
+    {
+        info->summary = "Get Image";
+        info->description = "Get Image";
+    }
     ENDPOINT("GET", "/api/frame/{field}/img.jpg", getImage, PATH(String, field))
     {
         OATPP_LOGd("Test", "api/frame/{}/img.jpg", field);

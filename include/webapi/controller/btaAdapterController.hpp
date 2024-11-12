@@ -44,8 +44,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
    public:
     ENDPOINT_INFO(getBtaInfo)
     {
-        info->summary = "get camera settings";
-        //   info->addConsumes<Object<UserDto>>("application/json");
+        info->summary = "Get Camera Settings";
+        info->description = "Get Camera Settings";
         info->addResponse<Object<BtaSettingsDTO>>(Status::CODE_200,
                                                   "application/json");
     }
@@ -74,12 +74,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return dto;
     }
 
-    // ENDPOINT_INFO(getIntegrationTime) {
-    //   info->summary = "get the integration time";
-    //   info->addConsumes<Object<UserDto>>("application/json");
-    //   info->addResponse<Object<UserDto>>(Status::CODE_200, "application/json");
-    // }
-
+    ENDPOINT_INFO(getIntegrationTime)
+    {
+        info->summary = "Get Integration Time";
+        info->description = "Get Integration Time";
+    }
     ENDPOINT("GET", "/api/bta/integrationTime", getIntegrationTime)
     {
         OATPP_LOGd("BTA", "api/bta/integrationTime G {}", time);
@@ -94,6 +93,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(setIntegrationTime)
+    {
+        info->summary = "Set Integration Time";
+        info->description = "Set Integration Time";
+    }
     ENDPOINT("POST", "/api/bta/integrationTime", setIntegrationTime,
              QUERY(Int32, time))
     {
@@ -116,6 +120,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(getFrameRate)
+    {
+        info->summary = "Get Frame Rate";
+        info->description = "Get Frame Rate";
+    }
     ENDPOINT("GET", "/api/bta/frameRate", getFrameRate)
     {
         OATPP_LOGd("BTA", "api/bta/frameRate G");
@@ -130,6 +139,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(setFrameRate)
+    {
+        info->summary = "Set Frame Rate";
+        info->description = "Set Frame Rate";
+    }
     ENDPOINT("POST", "/api/bta/frameRate", setFrameRate, QUERY(Float32, rate))
     {
         OATPP_LOGd("BTA", "api/bta/frameRate P {}", rate);
@@ -150,6 +164,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(getModulationFrequency)
+    {
+        info->summary = "Get Modulation Frequency";
+        info->description = "Get Modulation Frequency";
+    }
     ENDPOINT("GET", "/api/bta/modulationFrequency", getModulationFrequency)
     {
         OATPP_LOGd("BTA", "api/bta/modulationFrequency G");
@@ -164,6 +183,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(setModulationFrequency)
+    {
+        info->summary = "Set Modulation Frequency";
+        info->description = "Set Modulation Frequency";
+    }
     ENDPOINT("POST", "/api/bta/modulationFrequency", setModulationFrequency,
              QUERY(Float32, freq))
     {
@@ -186,6 +210,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(getGlobalOffset) { info->summary = "Get Global Offset"; }
     ENDPOINT("GET", "/api/bta/globalOffset", getGlobalOffset)
     {
         OATPP_LOGd("BTA", "api/bta/globalOffset G {}", time);
@@ -201,6 +226,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(setGlobalOffset)
+    {
+        info->summary = "Set Global Offset";
+        info->description = "Set Global Offset";
+    }
     ENDPOINT("POST", "/api/bta/globalOffset", setGlobalOffset,
              QUERY(Float32, offset))
     {
@@ -221,6 +251,11 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
+    ENDPOINT_INFO(getRegister)
+    {
+        info->summary = "Get Register";
+        info->description = "Get Register";
+    }
     ENDPOINT("GET", "/api/bta/reg/{addr}", getRegister, PATH(String, addr))
     {
         OATPP_LOGd("BTA", "api/bta/reg G");
@@ -239,7 +274,12 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
 
-    ENDPOINT("POST", "/api/bta/reg/{addr}", postRegister, PATH(String, addr),
+    ENDPOINT_INFO(setRegister)
+    {
+        info->summary = "Set Register";
+        info->description = "Set Register";
+    }
+    ENDPOINT("POST", "/api/bta/reg/{addr}", setRegister, PATH(String, addr),
              QUERY(String, value))
     {
         OATPP_LOGd("BTA", "api/bta/reg P");
