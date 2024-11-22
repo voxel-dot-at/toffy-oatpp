@@ -2,6 +2,7 @@
 #define WEB_ADAP_CONTROLLER_HPP
 
 #include <string>
+#include <iostream>
 #include <map>
 
 #include "oatpp/web/server/api/ApiController.hpp"
@@ -30,10 +31,7 @@
 class WebAdapterController : public oatpp::web::server::api::ApiController
 {
     toffy::webapi::WebAdapter* webAdap;
-
-    // std::shared_ptr<oatpp::data::resource::Resource> m_resource;
-    // oatpp::async::LockGuard m_lockGuard;
-    // oatpp::async::ConditionVariable* m_cv;
+    toffy::webapi::FrameInfoListener filo;
 
    public:
     /**
@@ -49,30 +47,76 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
     void registerCallbacks(toffy::webapi::WebAdapter* webApi);
 
    public:
-    ENDPOINT_INFO(getFr)
+
+    ENDPOINT_ASYNC("GET", "/api/g", FrameCo)
     {
-        info->summary = "Get FR";
-        info->description = "Get FR";
-    }
-    ENDPOINT("GET", "/api/fr", getFr)
-    {
-        OATPP_LOGd("Test", "api/fr");
-        if (!webAdap) {
-            return createResponse(Status::CODE_404, "no web adapter");
-        }
-        webAdap->sharedMat = nullptr;
-        OATPP_LOGd("Test", "api/fr waity");
+        ENDPOINT_ASYNC_INIT(FrameCo)
+
+        Action act() override
         {
-            oatpp::async::LockGuard guard(&webAdap->shared_lock);
+            std::cout << "gGGGGG " << std::endl;
+            try {
+            WebAdapterController* self = (WebAdapterController*)controller;
+            toffy::webapi::WebAdapter* webAdap = self->webAdap;
+            toffy::webapi::FrameInfoListener* fisi = &self->filo;
+            std::cout << "webAdap pre lk# " << webAdap->resource.counter
+                      << std::endl;
+            webAdap->singleShot(fisi);
 
-            webAdap->shared_cv.wait(guard, [this]() noexcept {
-                return webAdap->sharedMat != nullptr;
-            });
+            oatpp::async::LockGuard lockGuard(&webAdap->theLock());
+            return webAdap->theCv()
+                .wait(lockGuard,
+                       [webAdap] { return webAdap->resource.counter > 0; })
+                .next(yieldTo(&FrameCo::onReady));
+            } catch(std::exception& e) {
+                std::cout << "AU! " << e.what() << std::endl;
+            }
         }
-        OATPP_LOGd("Test", "api/fr waited");
 
-        return createResponse(Status::CODE_200, "released");
-    }
+        Action onReady()
+        {
+            WebAdapterController* self = (WebAdapterController*)controller;
+            toffy::webapi::WebAdapter* webAdap = self->webAdap;
+            toffy::webapi::FrameInfoListener* fisi = &self->filo;
+            // OATPP_ASSERT(
+            //     m_lockGuard.owns_lock())  // Now coroutine owns the lock
+
+            std::cout << "webAdap pre lk# " << webAdap->resource.counter
+                      << std::endl;
+            auto dto = FrameDto::createShared();
+            dto->fc = fisi->fc;
+            dto->ts = fisi->ts;
+            dto->ledTemp = fisi->ledTemp;
+            dto->mainTemp = fisi->mainTemp;
+
+            dto->slots = {};
+            for (auto iter = fisi->slots.begin(); iter != fisi->slots.end();
+                 iter++) {
+                auto slot = SlotInfoDto::createShared();
+                slot->name = iter->key;
+                slot->dt = iter->dt;
+                slot->desc = iter->description;
+                dto->slots->push_back(slot);
+
+                if (iter->dt == toffy::Frame::SlotDataType::Mat) {
+                    dto->mats->push_back(slot);
+                }
+            }
+
+            dto->fields = {};
+            // dto->dts = {};
+            // dto->desc = {};
+            for (auto iter = fisi->slots.begin(); iter != fisi->slots.end();
+                 iter++) {
+                //     dto->fields->push_back(iter->key);
+                //     dto->dts->push_back(iter->dt);
+                //     dto->desc->push_back(iter->description);
+            }
+            return _return(
+                controller->createDtoResponse(Status::CODE_200, dto));
+            // return finish();
+        }
+    };
 
     ENDPOINT_INFO(getFrameInfo)
     {
@@ -85,25 +129,28 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
         if (!webAdap) {
             return createResponse(Status::CODE_404, "no web adapter");
         }
-        auto dto = FrameDto::createShared();
-        dto->fc = webAdap->fc;
-
-        // toffy::webapi::FrameInfoListener* fisi = nullptr;
-        // const std::string f = "frameInfo";
-        // auto iter = lisis.find(f);
-        // if (iter == lisis.end()) {
-        //     fisi = new toffy::webapi::FrameInfoListener(f);
-        //     lisis.insert({f, fisi});
-        //     webAdap->listeners.push_back(fisi);
-        // } else {
-        //     fisi = (toffy::webapi::FrameInfoListener*)(iter->second);
-        // }
-        // fisi->waitForWork();
-
-        toffy::webapi::FrameInfoListener filo("frame");
-        auto a = webAdap->fetchNextFrame(&filo);
 
         toffy::webapi::FrameInfoListener* fisi = &filo;
+        std::cout << "webAdap pre lk# " << webAdap->resource.counter
+                  << std::endl;
+        webAdap->singleShot(&filo);
+        {
+            oatpp::async::LockGuard lockGuard(&webAdap->theLock());
+            webAdap->theCv().wait(
+                lockGuard, [this]() { return webAdap->resource.counter > 0; });
+            std::cout << "webAdap pst lk# " << webAdap->resource.counter
+                      << std::endl;
+            // .wait(lockGuard,[this]() noexcept {
+            //     // cout << "bop " << m_resource->counter << endl;
+            //     return resource->counter >0;
+            // });
+            // .next(finish());
+            webAdap->resource.counter--;
+        }
+
+        std::cout << "webAdap pst delta fc " << webAdap->fc << " " << fisi->fc
+                  << std::endl;
+        auto dto = FrameDto::createShared();
         dto->fc = fisi->fc;
         dto->ts = fisi->ts;
         dto->ledTemp = fisi->ledTemp;
@@ -123,15 +170,15 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
             }
         }
 
-        // dto->fields = {};
+        dto->fields = {};
         // dto->dts = {};
         // dto->desc = {};
-        // for (auto iter = fisi->slots.begin(); iter != fisi->slots.end();
-        //      iter++) {
-        //     dto->fields->push_back(iter->key);
-        //     dto->dts->push_back(iter->dt);
-        //     dto->desc->push_back(iter->description);
-        // }
+        for (auto iter = fisi->slots.begin(); iter != fisi->slots.end();
+             iter++) {
+            //     dto->fields->push_back(iter->key);
+            //     dto->dts->push_back(iter->dt);
+            //     dto->desc->push_back(iter->description);
+        }
         return createDtoResponse(Status::CODE_200, dto);
     }
 

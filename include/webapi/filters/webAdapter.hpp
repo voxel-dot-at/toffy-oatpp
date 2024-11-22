@@ -26,9 +26,19 @@
 namespace toffy {
 namespace webapi {
 
+struct Resource
+{
+    v_int64 counter;
+    Frame* frame;
+};
+
 class WebAdapter : public Filter
 {
     static const std::string id_name;  ///< Filter identifier
+
+    oatpp::async::ConditionVariable newFrameSema;
+    oatpp::async::Lock lock;
+
    public:
     WebAdapter();
 
@@ -36,9 +46,9 @@ class WebAdapter : public Filter
 
     unsigned int fc = -1;
 
-    oatpp::async::ConditionVariable newFrameSema;
-    // oatpp::async::LockGuard m_lockGuard;
-    oatpp::async::Lock lock;
+    oatpp::async::Lock& theLock() { return lock; }
+    oatpp::async::ConditionVariable& theCv() { return newFrameSema; }
+    volatile Resource resource;
 
     std::vector<WebListener*> listeners;
 
@@ -50,19 +60,13 @@ class WebAdapter : public Filter
     virtual bool filter(const Frame& in, Frame& out);
 
     // registers from an extrnal thread, will be released via newFrameSema:
-    oatpp::async::Action fetchNextFrame(WebListener* weli);
+    // oatpp::async::Action fetchNextFrame(WebListener* weli);
 
-    std::vector<WebListener*> nexties;
-
-    // shared resource: new frame ...
-
-    Frame* sharedMat;
-    // std::shared_ptr<Resource> resource;
-    oatpp::async::Lock shared_lock;
-    oatpp::async::ConditionVariable shared_cv;
+    void singleShot(WebListener* wl) { nexties.push_back(wl); }
 
    private:
     static size_t _filter_counter;
+    std::vector<WebListener*> nexties;
 };
 
 extern toffy::Filter* CreateWebAdapter(void);

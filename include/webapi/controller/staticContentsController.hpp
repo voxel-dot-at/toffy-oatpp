@@ -6,7 +6,7 @@
 #include "oatpp/macro/component.hpp"
 #include "oatpp/base/Log.hpp"
 
-//#include "globals.hpp"
+#include "globals.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController)  //<-- Begin Codegen
 
@@ -70,9 +70,12 @@ class StaticContentsController : public oatpp::web::server::api::ApiController
             if (path.at(path.size() - 1) == '/') {
                 path += "index.html";
             }
+            // TODO: check jail escape sequences.
+            
             // We will check the file if exist and send the index.html in case of not
             OATPP_LOGd("loading {}", ("webapi/" + path));
-            auto file = oatpp::String::loadFromFile(("webapi/" + path).c_str());
+            auto file =
+                oatpp::String::loadFromFile((theState.webRoot + path).c_str());
             // Send 404 not found in case of no file
             OATPP_ASSERT_HTTP(file.get() != nullptr, Status::CODE_404,
                               "File not found");

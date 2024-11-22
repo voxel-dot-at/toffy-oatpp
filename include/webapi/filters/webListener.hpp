@@ -81,7 +81,7 @@ class WebListener : public oatpp::async::Coroutine<WebListener>
 class FrameInfoListener : public WebListener
 {
    public:
-    FrameInfoListener(const std::string& name) : WebListener(name) {}
+    FrameInfoListener(const std::string& name = "frame") : WebListener(name) { isWaiting=true; }
 
     // std::vector<std::string> keys;
     std::vector<Frame::SlotInfo> slots;

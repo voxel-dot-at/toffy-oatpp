@@ -30,8 +30,8 @@ class SwaggerComponent
             .setLicenseName("Apache License, Version 2.0")
             .setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0")
 
-            .addServer("http://192.168.2.133:8000", "server on lab.net")
             .addServer("http://localhost:8000", "server on localhost");
+            // .addServer("http://192.168.2.133:8000", "server on lab.net");
 
         return builder.build();
     }());

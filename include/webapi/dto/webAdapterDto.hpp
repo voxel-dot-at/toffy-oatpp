@@ -38,9 +38,9 @@ class FrameDto : public oatpp::DTO {
 
   DTO_FIELD(Vector<String>, fields);
 
-  DTO_FIELD(Vector<Int16>, dts);
+//   DTO_FIELD(Vector<Int16>, dts);
 
-  DTO_FIELD(Vector<String>, desc);
+//   DTO_FIELD(Vector<String>, desc);
 };
 
 
