@@ -33,6 +33,9 @@ const std::string WebAdapter::id_name = "webAdapter";
 WebAdapter::WebAdapter() : Filter(WebAdapter::id_name, _filter_counter)
 {
     _filter_counter++;
+    // bool worked = this->lock.try_lock();
+    // cout << "WebAdapter::WebAdapter() locked? " << worked << endl;
+
 }
 
 // virtual int loadConfig(const boost::property_tree::ptree& pt);
@@ -55,12 +58,20 @@ void WebAdapter::updateConfig(const boost::property_tree::ptree& pt)
 
 bool WebAdapter::filter(const Frame& in, Frame& out)
 {
+    // bool worked = this->lock.try_lock();
+    // if (!worked) {
+    //     cout << "WebAdapter::filter() FAILED TO LOCK " << worked << " " << listeners.size() << " single " << singleShots.size() << endl;
+    // }
+
     this->fc = in.optUInt("fc", -1);
 
+    cout << "WebAdapter::filter() listeners..? " << listeners.size() << " single " << singleShots.size() << " rc " << resource.counter <<  endl;
     {
-        std::lock_guard<oatpp::async::Lock> guard(this->shared_lock);
+        std::lock_guard<oatpp::async::Lock> guard(lock);
+        // std::lock_guard<oatpp::async::Lock> guard(this->lock);
         this->fc = in.optUInt("fc", -1);
-        sharedMat = &out;
+        this->resource.counter++;
+        this->resource.frame = &out;
 
         for (auto iter = listeners.begin(); iter != listeners.end(); iter++) {
             WebListener* weli = *iter;
@@ -68,58 +79,17 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             weli->haveWork(in);
         }
 
-        for (auto iter = nexties.begin(); iter != nexties.end(); iter++) {
+        for (auto iter = singleShots.begin(); iter != singleShots.end(); iter++) {
             (*iter)->haveWork(in);
         }
-        nexties.clear();
+        singleShots.clear();
     }
-    newFrameSema.notifyAll();
-    shared_cv.notifyAll(); // new frame..
+    cout << "WebAdapter::filter() GO" << " rc " << resource.counter << endl;
+    // this->lock.unlock();
+    theCv().notifyAll(); 
 
-    sharedMat = nullptr;
-
+    resource.counter = 0;
+    cout << "WebAdapter::filter() DONE" << " rc " << resource.counter << endl;
     return true;
-}
-
-class MyCoroutine : public oatpp::async::Coroutine<MyCoroutine>
-{
-    oatpp::async::LockGuard lockGuard;
-    oatpp::async::ConditionVariable* newFrameSema;  ///< defined in webadapter
-   public:
-    MyCoroutine(oatpp::async::Lock* lock, oatpp::async::ConditionVariable* c)
-        : lockGuard(lock), newFrameSema(c)
-    {
-    }
-
-    Action act() override
-    {
-        cout << "MyCoroutine::act waitng.." << endl;
-        return newFrameSema
-            ->wait(lockGuard,
-                   [this]() noexcept {
-                       cout << "MyCoroutine::act waited!" << endl;
-                       return true;
-                   })
-            .next(finish());
-    }
-
-    Action onReady() { return finish(); }
-};
-
-oatpp::async::Action WebAdapter::fetchNextFrame(WebListener* weli)
-{
-    weli->newFrameSema = &newFrameSema;
-    nexties.push_back(weli);
-    cout << "WebAdapter::fetchNextFrame " << weli->name() << endl;
-    //    return weli->waitForNextFrame();
-
-    oatpp::async::Executor executor;
-
-    executor.execute<MyCoroutine>(&lock, &newFrameSema);
-
-    executor.waitTasksFinished();
-    executor.stop();
-    executor.join();
-    cout << "WebAdapter::fetchNextFrame FETCHED " << weli->name() << endl;
 }
 

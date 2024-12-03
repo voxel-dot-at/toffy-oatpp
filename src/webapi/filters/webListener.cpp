@@ -33,7 +33,7 @@ oatpp::async::Action WebListener::waitForWork()
         ->wait(m_lockGuard,
                [this]() noexcept {
                    isWaiting = false;
-                   cout << "WAITed " << name() << " " << valid << endl;
+                   cout << "WAITing4w " << name() << " " << valid << endl;
                    return valid;
                })
         .next(finish());
@@ -48,7 +48,7 @@ oatpp::async::Action WebListener::waitForNextFrame()
         ->wait(m_lockGuard,
                [this]() noexcept {
                    isWaiting = false;
-                   cout << "WAITed " << name() << " " << valid << endl;
+                   cout << "WAITing4n " << name() << " " << valid << endl;
                    return valid;
                })
         .next(finish());
@@ -82,11 +82,11 @@ bool FrameInfoListener::process(const Frame& in)
     mainTemp = in.optFloat("mt", -1);
     generalTemp = in.optFloat("gt", -1);
 
-    cout << "FrameInfoListener::process()" << endl;
+    cout << "FrameInfoListener::process() " << ledTemp << endl;
     auto it = slots.begin();
     while (it != slots.end()) {
         auto si = *it;
-        cout << "   " << si.key << " " << si.dt << " |" << si.description
+        cout << "   " << si.key << " " << si.dt << " |" << si.description 
              << endl;
         it++;
     }

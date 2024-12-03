@@ -1,5 +1,4 @@
-#ifndef BTA_ADAPTER_
-#define BTA_ADAPTER_
+#pragma once
 
 /**
  * @brief find a colored box via hsv analysis
@@ -108,4 +107,3 @@ extern toffy::Filter* CreateWebAdapter(void);
 }  // namespace oatpp
 }  // namespace toffy
 
-#endif

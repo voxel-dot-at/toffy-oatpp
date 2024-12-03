@@ -47,41 +47,43 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
     void registerCallbacks(toffy::webapi::WebAdapter* webApi);
 
    public:
-
     ENDPOINT_ASYNC("GET", "/api/g", FrameCo)
     {
-        ENDPOINT_ASYNC_INIT(FrameCo)
+        ENDPOINT_ASYNC_INIT(FrameCo);
 
         Action act() override
         {
             std::cout << "gGGGGG " << std::endl;
-            try {
             WebAdapterController* self = (WebAdapterController*)controller;
             toffy::webapi::WebAdapter* webAdap = self->webAdap;
             toffy::webapi::FrameInfoListener* fisi = &self->filo;
             std::cout << "webAdap pre lk# " << webAdap->resource.counter
-                      << std::endl;
+                      << " " << fisi->name() <<  std::endl;
             webAdap->singleShot(fisi);
-
+            std::cout << __LINE__ << "fifi" << std::endl;
             oatpp::async::LockGuard lockGuard(&webAdap->theLock());
+
+            std::cout << __LINE__ << "fifi" << std::endl;
             return webAdap->theCv()
                 .wait(lockGuard,
-                       [webAdap] { return webAdap->resource.counter > 0; })
+                      [self] { 
+                        std::cout << __LINE__ << "fnrf? " << std::endl;
+                        return self->webAdap->resource.counter > 0;
+                         })
                 .next(yieldTo(&FrameCo::onReady));
-            } catch(std::exception& e) {
-                std::cout << "AU! " << e.what() << std::endl;
-            }
         }
 
         Action onReady()
         {
             WebAdapterController* self = (WebAdapterController*)controller;
+            std::cout << __LINE__ << "fifi" << std::endl;
             toffy::webapi::WebAdapter* webAdap = self->webAdap;
             toffy::webapi::FrameInfoListener* fisi = &self->filo;
+            std::cout << __LINE__ << "fifi" << std::endl;
             // OATPP_ASSERT(
             //     m_lockGuard.owns_lock())  // Now coroutine owns the lock
 
-            std::cout << "webAdap pre lk# " << webAdap->resource.counter
+            std::cout << "webAdap onReady# " << webAdap->resource.counter
                       << std::endl;
             auto dto = FrameDto::createShared();
             dto->fc = fisi->fc;
@@ -136,15 +138,21 @@ class WebAdapterController : public oatpp::web::server::api::ApiController
         webAdap->singleShot(&filo);
         {
             oatpp::async::LockGuard lockGuard(&webAdap->theLock());
-            webAdap->theCv().wait(
-                lockGuard, [this]() { return webAdap->resource.counter > 0; });
+            std::chrono::duration<v_int64, std::micro> timeout(10);
+
+            webAdap->theCv().waitFor(
+                lockGuard,
+                [this]() {
+                    std::cout << "webAdap in lk# " << webAdap->resource.counter
+                              << std::endl;
+                    return webAdap->resource.counter > 0;
+                },
+                timeout)
+                // .next(&WebAdapterController::processFrame)
+                ;
             std::cout << "webAdap pst lk# " << webAdap->resource.counter
                       << std::endl;
-            // .wait(lockGuard,[this]() noexcept {
-            //     // cout << "bop " << m_resource->counter << endl;
-            //     return resource->counter >0;
-            // });
-            // .next(finish());
+
             webAdap->resource.counter--;
         }
 

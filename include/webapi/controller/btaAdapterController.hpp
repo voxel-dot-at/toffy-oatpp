@@ -1,5 +1,4 @@
-#ifndef BTA_ADAP_CONTROLLER_HPP
-#define BTA_ADAP_CONTROLLER_HPP
+#pragma once
 
 #include <stdlib.h>
 
@@ -138,6 +137,17 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
         return createResponse(Status::CODE_200, mapper.writeToString(tt));
     }
+
+    ENDPOINT_ASYNC("POST", "api/bta/fr", SetFrameRate)
+    {
+        ENDPOINT_ASYNC_INIT(SetFrameRate);
+
+        Action act() override
+        {
+            return _return(
+                controller->createResponse(Status::CODE_200, "blabla... "));
+        }
+    };
 
     ENDPOINT_INFO(setFrameRate)
     {
@@ -308,5 +318,3 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 };
 
 #include OATPP_CODEGEN_END(ApiController)  //<-- End Codegen
-
-#endif /* MyController_hpp */

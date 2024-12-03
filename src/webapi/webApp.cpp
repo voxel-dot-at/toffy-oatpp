@@ -5,13 +5,14 @@
 #include "oatpp/network/Server.hpp"
 
 #include "oatpp-swagger/Controller.hpp"
+#include "oatpp-swagger/AsyncController.hpp"
 
 #include "webapi/controller/staticContentsController.hpp"
 #include "webapi/controller/btaAdapterController.hpp"
 #include "webapi/controller/webAdapterController.hpp"
 #include "webapi/filters/webAdapter.hpp"
-#include "webapi/webAppComponent.hpp"
 #include "webapi/swaggerComponent.hpp"
+#include "webapi/appComponent.hpp"
 
 #include "globals.hpp"
 
@@ -52,7 +53,7 @@ static void run()
 
     if (theState.enableSwaggerUi) {
         router->addController(
-            oatpp::swagger::Controller::createShared(docEndpoints));
+            oatpp::swagger::AsyncController::createShared(docEndpoints));
     }
 
     // static contents:

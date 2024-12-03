@@ -1,7 +1,7 @@
-#ifndef WEB_APP_COMPONENT_HPP
-#define WEB_APP_COMPONENT_HPP
+#pragma once
 
 #include "oatpp/web/server/HttpConnectionHandler.hpp"
+#include "oatpp/web/server/AsyncHttpConnectionHandler.hpp"
 #include "oatpp/web/mime/ContentMappers.hpp"
 
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"
@@ -49,7 +49,7 @@ class AppComponent
     ([] {
         OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>,
                         router);  // get Router component
-        return oatpp::web::server::HttpConnectionHandler::createShared(router);
+        return oatpp::web::server::AsyncHttpConnectionHandler::createShared(router);
     }());
 
     /**
@@ -68,4 +68,3 @@ class AppComponent
     }());
 };
 
-#endif /* AppComponent_hpp */

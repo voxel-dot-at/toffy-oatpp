@@ -163,9 +163,11 @@ if(CMAKE_BUILD_TYPE MATCHES Release)
     add_definitions(-O2 -funroll-loops )
 endif()
 
-add_definitions(-Wall )
+add_definitions(-Wall -ggdb -O0 )
 # add_definitions( -Weffc++ )
 
 add_subdirectory(src)
 
 add_subdirectory(app)
+
+add_subdirectory(tests)

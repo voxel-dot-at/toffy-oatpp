@@ -36,7 +36,7 @@ class WebAdapter : public Filter
 {
     static const std::string id_name;  ///< Filter identifier
 
-    oatpp::async::ConditionVariable newFrameSema;
+    oatpp::async::ConditionVariable cv;
     oatpp::async::Lock lock;
 
    public:
@@ -47,7 +47,7 @@ class WebAdapter : public Filter
     unsigned int fc = -1;
 
     oatpp::async::Lock& theLock() { return lock; }
-    oatpp::async::ConditionVariable& theCv() { return newFrameSema; }
+    oatpp::async::ConditionVariable& theCv() { return cv; }
     volatile Resource resource;
 
     std::vector<WebListener*> listeners;
@@ -62,11 +62,11 @@ class WebAdapter : public Filter
     // registers from an extrnal thread, will be released via newFrameSema:
     // oatpp::async::Action fetchNextFrame(WebListener* weli);
 
-    void singleShot(WebListener* wl) { nexties.push_back(wl); }
+    void singleShot(WebListener* wl) { singleShots.push_back(wl); }
 
    private:
     static size_t _filter_counter;
-    std::vector<WebListener*> nexties;
+    std::vector<WebListener*> singleShots;
 };
 
 extern toffy::Filter* CreateWebAdapter(void);

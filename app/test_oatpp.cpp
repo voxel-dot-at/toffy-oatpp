@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include <opencv2/highgui.hpp>
 
@@ -11,7 +12,6 @@
 
 #include "webapi/filters/webAdapter.hpp"
 #include "webapi/webApp.hpp"
-#include "webapi/webAppComponent.hpp"
 
 using namespace std;
 using namespace toffy;
@@ -69,6 +69,12 @@ int main(int argc, const char *argv[])
             confFile = argv[i + 1];
             i++;
         }
+    }
+
+    {
+        //may return 0 when not able to detect
+        const auto processor_count = std::thread::hardware_concurrency();
+        cout << "# cores detected " << processor_count << endl;
     }
 
     init_toffy_web();
