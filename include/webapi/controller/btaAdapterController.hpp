@@ -23,47 +23,55 @@
  */
 class BtaAdapterController : public oatpp::web::server::api::ApiController
 {
-    oatpp::json::ObjectMapper mapper;
+    std::shared_ptr<oatpp::data::mapping::ObjectMapper> om;
 
     toffy::capturers::Bta* bta;
 
    public:
     /**
-   * Constructor with object mapper.
+   * Constructor with object om->
    * @param apiContentMappers - mappers used to serialize/deserialize `s.
    */
     BtaAdapterController(OATPP_COMPONENT(
         std::shared_ptr<oatpp::web::mime::ContentMappers>, apiContentMappers))
         : oatpp::web::server::api::ApiController(apiContentMappers)
     {
+        om = apiContentMappers->getDefaultMapper();
+        OATPP_LOGd("CAMH", "CameraController: mapper serializing to {}/{}", om->getInfo().mimeType,
+                   om->getInfo().mimeSubtype);
     }
 
     void registerBta(toffy::capturers::Bta* bta) { this->bta = bta; };
 
    public:
-    ENDPOINT_INFO(getBtaInfo)
+    ENDPOINT_INFO(GetBtaInfo)
     {
         info->summary = "Get Camera Settings";
         info->description = "Get Camera Settings";
-        info->addResponse<Object<BtaSettingsDTO>>(Status::CODE_200,
-                                                  "application/json");
+        info->addResponse<Object<BtaSettingsDTO>>(Status::CODE_200, "application/json");
     }
-    ENDPOINT("GET", "/api/bta", getBtaInfo)
+    ENDPOINT_ASYNC("GET", "/api/bta", GetBtaInfo)
     {
-        OATPP_LOGd("BTA", "api/bta");
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        ENDPOINT_ASYNC_INIT(GetBtaInfo)
+
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "GET api/bta");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            BtaWrapper* s = self->bta->getSensor();
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            auto response = self->createDtoResponse(Status::CODE_200, self->populateBtaSettingsDTO(*s));
+
+            return _return(response);
         }
-
-        BtaWrapper* s = bta->getSensor();
-
-        return createDtoResponse(Status::CODE_200, populateBtaSettingsDTO(*s));
-    }
+    };
 
     inline BtaSettingsDTO::Wrapper populateBtaSettingsDTO(BtaWrapper& bta)
     {
         auto dto = BtaSettingsDTO::createShared();
-        // populateBtaSettings(dto);
 
         dto->connected = bta.getState() == BtaWrapper::ConnState::connected;
         dto->integrationTime = bta.getIntegrationTime();
@@ -73,243 +81,377 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         return dto;
     }
 
-    ENDPOINT_INFO(getIntegrationTime)
+    ENDPOINT_INFO(GetIntegrationTime)
     {
         info->summary = "Get Integration Time";
         info->description = "Get Integration Time";
     }
-    ENDPOINT("GET", "/api/bta/integrationTime", getIntegrationTime)
+    ENDPOINT_ASYNC("GET", "/api/bta/integrationTime", GetIntegrationTime)
     {
-        OATPP_LOGd("BTA", "api/bta/integrationTime G {}", time);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        ENDPOINT_ASYNC_INIT(GetIntegrationTime)
+
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "GET api/bta/integrationTime");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            BtaWrapper* s = self->bta->getSensor();
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            unsigned int value = s->getIntegrationTime();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+
+            return _return(response);
         }
+    };
 
-        BtaWrapper* s = bta->getSensor();
-
-        oatpp::Int32 tt = s->getIntegrationTime();
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(setIntegrationTime)
+    ENDPOINT_INFO(SetIntegrationTime)
     {
         info->summary = "Set Integration Time";
         info->description = "Set Integration Time";
+        info->pathParams.add<Int32>("time").description = "input a time value";
     }
-    ENDPOINT("POST", "/api/bta/integrationTime", setIntegrationTime,
-             QUERY(Int32, time))
+    ENDPOINT_ASYNC("POST", "/api/bta/integrationTime/{time}", SetIntegrationTime)
     {
-        OATPP_LOGd("BTA", "api/bta/integrationTime P {}", time);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
-        }
+        ENDPOINT_ASYNC_INIT(SetIntegrationTime)
 
-        BtaWrapper* s = bta->getSensor();
-        if (time > 0) {
-            int result = s->setIntegrationTime((unsigned int)time);
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "POST api/bta/integrationTime");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            auto timeStr = request->getPathVariable("time");
+            BtaWrapper* s = self->bta->getSensor();
 
-            if (result == 0) {
-                return createResponse(Status::CODE_406,
-                                      "Invalid integration time");
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
             }
+
+            try {
+                int time = std::stoi(timeStr->c_str());
+
+                if (time > 0) {
+                    int result = s->setIntegrationTime(time);
+
+                    if (result == 0) {
+                        return _return(self->createResponse(Status::CODE_406, "Invalid integration time"));
+                    }
+                } else {
+                    return _return(self->createResponse(Status::CODE_400, "Integration time must be greater than 0"));
+                }
+            } catch (const std::exception& e) {
+                return _return(self->createResponse(Status::CODE_400, "Invalid time format"));
+            }
+
+            unsigned int value = s->getIntegrationTime();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+
+            return _return(response);
         }
+    };
 
-        oatpp::Int32 tt = s->getIntegrationTime();
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(getFrameRate)
+    ENDPOINT_INFO(GetFrameRate)
     {
         info->summary = "Get Frame Rate";
         info->description = "Get Frame Rate";
     }
-    ENDPOINT("GET", "/api/bta/frameRate", getFrameRate)
+    ENDPOINT_ASYNC("GET", "/api/bta/frameRate", GetFrameRate)
     {
-        OATPP_LOGd("BTA", "api/bta/frameRate G");
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
-        }
-
-        BtaWrapper* s = bta->getSensor();
-
-        oatpp::Float32 tt = s->getFrameRate();
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_ASYNC("POST", "api/bta/fr", SetFrameRate)
-    {
-        ENDPOINT_ASYNC_INIT(SetFrameRate);
+        ENDPOINT_ASYNC_INIT(GetFrameRate)
 
         Action act() override
         {
-            return _return(
-                controller->createResponse(Status::CODE_200, "blabla... "));
+            OATPP_LOGd("BTA", "GET api/bta/frameRate");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            BtaWrapper* s = self->bta->getSensor();
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            float value = s->getFrameRate();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+
+            return _return(response);
         }
     };
 
-    ENDPOINT_INFO(setFrameRate)
+    ENDPOINT_INFO(SetFrameRate)
     {
         info->summary = "Set Frame Rate";
         info->description = "Set Frame Rate";
+        info->pathParams.add<Float32>("rate").description = "input a rate value";
     }
-    ENDPOINT("POST", "/api/bta/frameRate", setFrameRate, QUERY(Float32, rate))
+    ENDPOINT_ASYNC("POST", "/api/bta/frameRate/{rate}", SetFrameRate)
     {
-        OATPP_LOGd("BTA", "api/bta/frameRate P {}", rate);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
-        }
+        ENDPOINT_ASYNC_INIT(SetFrameRate)
 
-        BtaWrapper* s = bta->getSensor();
-        if (rate > 0) {
-            int result = s->setFrameRate((unsigned int)rate);
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "POST api/bta/frameRate");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            auto rateStr = request->getPathVariable("rate");
+            BtaWrapper* s = self->bta->getSensor();
 
-            if (result == 0) {
-                return createResponse(Status::CODE_406, "Invalid frame rate");
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
             }
+
+            try {
+                float rate = std::stoi(rateStr->c_str());
+
+                if (rate > 0) {
+                    int result = s->setFrameRate(rate);
+
+                    if (result == 0) {
+                        return _return(self->createResponse(Status::CODE_406, "Invalid frame rate"));
+                    }
+                } else {
+                    return _return(self->createResponse(Status::CODE_400, "Frame rate must be greater than 0"));
+                }
+            } catch (const std::exception& e) {
+                return _return(self->createResponse(Status::CODE_400, "Invalid frame rate format"));
+            }
+
+            float value = s->getFrameRate();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+
+            return _return(response);
         }
+    };
 
-        oatpp::Int32 tt = s->getFrameRate();
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(getModulationFrequency)
+    ENDPOINT_INFO(GetModulationFrequency)
     {
         info->summary = "Get Modulation Frequency";
         info->description = "Get Modulation Frequency";
     }
-    ENDPOINT("GET", "/api/bta/modulationFrequency", getModulationFrequency)
+    ENDPOINT_ASYNC("GET", "/api/bta/modulationFrequency", GetModulationFrequency)
     {
-        OATPP_LOGd("BTA", "api/bta/modulationFrequency G");
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        ENDPOINT_ASYNC_INIT(GetModulationFrequency)
+
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "GET api/bta/modulationFrequency");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            BtaWrapper* s = self->bta->getSensor();
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            unsigned int value = s->getModulationFrequency();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+            return _return(response);
         }
+    };
 
-        BtaWrapper* s = bta->getSensor();
-
-        oatpp::Int32 tt = s->getModulationFrequency();
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(setModulationFrequency)
+    ENDPOINT_INFO(SetModulationFrequency)
     {
         info->summary = "Set Modulation Frequency";
         info->description = "Set Modulation Frequency";
+        info->pathParams.add<Int32>("freq").description = "input a modulation frequency";
     }
-    ENDPOINT("POST", "/api/bta/modulationFrequency", setModulationFrequency,
-             QUERY(Float32, freq))
+    ENDPOINT_ASYNC("POST", "/api/bta/modulationFrequency/{freq}", SetModulationFrequency)
     {
-        OATPP_LOGd("BTA", "api/bta/modulationFrequency P {}", time);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
-        }
+        ENDPOINT_ASYNC_INIT(SetModulationFrequency)
 
-        BtaWrapper* s = bta->getSensor();
-        if (freq > 0) {
-            int result = s->setModulationFrequency((unsigned int)freq);
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "POST api/bta/modulationFrequency");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            auto freqStr = request->getPathVariable("freq");
+            BtaWrapper* s = self->bta->getSensor();
 
-            if (result == 0) {
-                return createResponse(Status::CODE_406,
-                                      "Invalid modulation frequency");
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
             }
+
+            try {
+                int freq = std::stoi(freqStr->c_str());
+
+                if (freq > 0) {
+                    int result = s->setModulationFrequency(freq);
+
+                    if (result == 0) {
+                        return _return(self->createResponse(Status::CODE_406, "Invalid modulation frequency"));
+                    }
+                } else {
+                    return _return(self->createResponse(Status::CODE_400, "Invalid modulation frequency"));
+                }
+            } catch (const std::exception& e) {
+                return _return(self->createResponse(Status::CODE_400, "Invalid modulation frequency"));
+            }
+
+            unsigned int value = s->getModulationFrequency();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+
+            return _return(response);
         }
+    };
 
-        oatpp::Int32 tt = s->getModulationFrequency();
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(getGlobalOffset) { info->summary = "Get Global Offset"; }
-    ENDPOINT("GET", "/api/bta/globalOffset", getGlobalOffset)
+    ENDPOINT_INFO(GetGlobalOffset)
     {
-        OATPP_LOGd("BTA", "api/bta/globalOffset G {}", time);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
-        }
-
-        BtaWrapper* s = bta->getSensor();
-
-        // nb. conversion down to int - this was in meters for old cameras, now it is mm
-        oatpp::Int32 tt = s->getGlobalOffset();
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
+        info->summary = "Get Global Offset";
+        info->description = "Get Global Offset";
     }
+    ENDPOINT_ASYNC("GET", "/api/bta/globalOffset", GetGlobalOffset)
+    {
+        ENDPOINT_ASYNC_INIT(GetGlobalOffset)
 
-    ENDPOINT_INFO(setGlobalOffset)
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "GET api/bta/globalOffset");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            BtaWrapper* s = self->bta->getSensor();
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            float value = s->getGlobalOffset();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+
+            return _return(response);
+        }
+    };
+
+    ENDPOINT_INFO(SetGlobalOffset)
     {
         info->summary = "Set Global Offset";
         info->description = "Set Global Offset";
+        info->pathParams.add<Float32>("offset").description = "input a modulation frequency";
     }
-    ENDPOINT("POST", "/api/bta/globalOffset", setGlobalOffset,
-             QUERY(Float32, offset))
+    ENDPOINT_ASYNC("POST", "/api/bta/modulationFrequency/{offset}", SetGlobalOffset)
     {
-        OATPP_LOGd("BTA", "api/bta/globalOffet P {}", time);
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        ENDPOINT_ASYNC_INIT(SetGlobalOffset)
+
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "POST api/bta/modulationFrequency");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+            auto offsetStr = request->getPathVariable("offset");
+            BtaWrapper* s = self->bta->getSensor();
+
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            try {
+                float offset = std::stoi(offsetStr->c_str());
+
+                if (offset > 0) {
+                    int result = s->setGlobalOffset(offset);
+
+                    if (result == 0) {
+                        return _return(self->createResponse(Status::CODE_406, "Invalid global offset"));
+                    }
+                } else {
+                    return _return(self->createResponse(Status::CODE_400, "Invalid global offset"));
+                }
+            } catch (const std::exception& e) {
+                return _return(self->createResponse(Status::CODE_400, "Invalid global offset"));
+            }
+
+            float value = s->getGlobalOffset();
+            auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+
+            return _return(response);
         }
+    };
 
-        BtaWrapper* s = bta->getSensor();
-
-        int result = s->setGlobalOffset(offset);
-
-        if (result == 0) {
-            return createResponse(Status::CODE_406, "Invalid global offset");
-        }
-
-        oatpp::Int32 tt = s->getGlobalOffset();
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(getRegister)
+    ENDPOINT_INFO(GetRegister)
     {
         info->summary = "Get Register";
-        info->description = "Get Register";
+        info->description = "Return value is integer decimal not hexadecimal";
+        info->pathParams.add<String>("addr").description = "input can be decimal (123) or hexadecimal (0xabc)";
     }
-    ENDPOINT("GET", "/api/bta/reg/{addr}", getRegister, PATH(String, addr))
+    ENDPOINT_ASYNC("GET", "/api/bta/reg/{addr}", GetRegister)
     {
-        OATPP_LOGd("BTA", "api/bta/reg G");
+        ENDPOINT_ASYNC_INIT(GetRegister)
 
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "GET /api/bta/reg");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            try {
+                auto a = request->getPathVariable("addr");
+                char* endptr = NULL;
+
+                long int reg = strtol(((std::string)a).c_str(), &endptr, 0);
+
+                if (*endptr != '\0' || reg < 0) {
+                    OATPP_LOGd("BTA", "Invalid register address: %s", a->c_str());
+                    return _return(self->createResponse(Status::CODE_400, "Invalid register address"));
+                }
+
+                BtaWrapper* s = self->bta->getSensor();
+                unsigned int value = s->readRegister(reg);
+
+                auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+                return _return(response);
+
+            } catch (const std::exception& e) {
+                OATPP_LOGe("BTA", "Exception occurred: %s", e.what());
+                return _return(self->createResponse(Status::CODE_400, "Error processing register address"));
+            }
         }
-        BtaWrapper* s = bta->getSensor();
+    };
 
-        std::string a = addr;
-        char* endptr = NULL;
-        long int reg = strtol(a.c_str(), &endptr, 0);
-        unsigned int val = s->readRegister(reg);
-        oatpp::Int32 tt = val;
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
-
-    ENDPOINT_INFO(setRegister)
+    ENDPOINT_INFO(SetRegister)
     {
         info->summary = "Set Register";
-        info->description = "Set Register";
+        info->description = "Return value is integer decimal not hexadecimal";
+        info->pathParams.add<String>("addr").description = "input can be decimal (123) or hexadecimal (0xabc)";
+        info->pathParams.add<String>("value").description = "input can be decimal (123) or hexadecimal (0xabc)";
     }
-    ENDPOINT("POST", "/api/bta/reg/{addr}", setRegister, PATH(String, addr),
-             QUERY(String, value))
+    ENDPOINT_ASYNC("POST", "/api/bta/reg/{addr}/{value}", SetRegister)
     {
-        OATPP_LOGd("BTA", "api/bta/reg P");
+        ENDPOINT_ASYNC_INIT(SetRegister)
 
-        if (!bta) {
-            return createResponse(Status::CODE_404, "no bta");
+        Action act() override
+        {
+            OATPP_LOGd("BTA", "POST /api/bta/reg");
+            BtaAdapterController* self = (BtaAdapterController*)controller;
+
+            if (!self->bta) {
+                return _return(self->createResponse(Status::CODE_404, "No BTA available"));
+            }
+
+            try {
+                auto a = request->getPathVariable("addr");
+                auto v = request->getPathVariable("value");
+                char* endptr = NULL;
+
+                long int reg = strtol(((std::string)a).c_str(), &endptr, 0);
+
+                if (*endptr != '\0' || reg < 0) {
+                    OATPP_LOGd("BTA", "Invalid register address: %s", a->c_str());
+                    return _return(self->createResponse(Status::CODE_400, "Invalid register address"));
+                }
+
+                long int val = strtol(((std::string)v).c_str(), &endptr, 0);
+
+                if (*endptr != '\0') {
+                    OATPP_LOGd("BTA", "Invalid register value: %s", v->c_str());
+                    return _return(self->createResponse(Status::CODE_400, "Invalid register value"));
+                }
+
+                BtaWrapper* s = self->bta->getSensor();
+                s->writeRegister(reg, val);
+
+                unsigned int value = s->readRegister(reg);
+
+                auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+                return _return(response);
+
+            } catch (const std::exception& e) {
+                OATPP_LOGe("BTA", "Exception occurred: %s", e.what());
+                return _return(self->createResponse(Status::CODE_400, "Error processing register address or value"));
+            }
         }
-        BtaWrapper* s = bta->getSensor();
-
-        std::string a = addr;
-        std::string v = value;
-        char* endptr = NULL;
-        long int reg = strtol(a.c_str(), &endptr, 0);
-        long int val = strtol(v.c_str(), &endptr, 0);
-        s->writeRegister(reg, val);
-        unsigned int vv = s->readRegister(reg);
-        oatpp::Int32 tt = vv;
-
-        return createResponse(Status::CODE_200, mapper.writeToString(tt));
-    }
+    };
 
    private:
     // std::shared_ptr<Response> upFreq(float freq);
