@@ -9,6 +9,9 @@ namespace webapi {
 
 class WebAdapter;
 
+// call this first...
+extern void webAppInit(); 
+
 
 extern void registerController(std::shared_ptr<oatpp::web::server::api::ApiController> controller);
 

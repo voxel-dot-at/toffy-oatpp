@@ -26,75 +26,92 @@ using namespace toffy::webapi;
 namespace toffy {
 namespace webapi {
 
-static std::vector<std::shared_ptr<oatpp::web::server::api::ApiController>> controllers;
-
-
-void registerController(std::shared_ptr<oatpp::web::server::api::ApiController> controller)
+/** helper class to enforce calling init() before initializing the AppComponent(!) */
+class Init
 {
-    controllers.push_back(controller);
+   public:
+    Init() { oatpp::Environment::init(); }
+};
+
+class WebApi
+{
+   public:
+    Init init;  // n.b. keep these two in order!
+    AppComponent components;
+
+    std::vector<std::shared_ptr<oatpp::web::server::api::ApiController>>
+        controllers;
+
+    WebApi() {}
+
+    void run()
+    {
+        /* Get router component */
+        OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>,
+                        router);
+
+        oatpp::web::server::api::Endpoints docEndpoints;
+
+        /**
+         * REGISTER CONTROLLERS
+         */
+
+        for (size_t i = 0; i < controllers.size(); i++) {
+            auto ctrl = controllers[i];
+            router->addController(ctrl);
+            docEndpoints.append(ctrl->getEndpoints());
+        }
+
+        if (theState.enableSwaggerUi) {
+            router->addController(
+                oatpp::swagger::AsyncController::createShared(docEndpoints));
+        }
+
+        // static contents:
+        router->addController(std::make_shared<StaticContentsController>());
+
+        /**
+         * /REGISTER CONTROLLERS
+         */
+
+        /* Get connection handler component */
+        OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>,
+                        connectionHandler);
+
+        /* Get connection provider component */
+        OATPP_COMPONENT(
+            std::shared_ptr<oatpp::network::ServerConnectionProvider>,
+            connectionProvider);
+
+        /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
+        oatpp::network::Server server(connectionProvider, connectionHandler);
+        theServer = &server;
+
+        /* Print info about server port */
+        OATPP_LOGi("WEBIF", "Server running on port {}",
+                   connectionProvider->getProperty("port").toString());
+
+        /* Run server */
+        server.run();
+
+        OATPP_LOGi("WEBIF", "Server stopped on port {}",
+                   connectionProvider->getProperty("port").toString());
+    }
+};
+
+WebApi api;
+
+void webAppInit() {}
+
+void registerController(
+    std::shared_ptr<oatpp::web::server::api::ApiController> controller)
+{
+    api.controllers.push_back(controller);
 }
-
-
 
 static void addInternalControllers()
 {
-//    registerController(std::make_shared<WebAdapterController>());
-}
-
-static void run()
-{
-    /* Register Components in scope of run() method */
-    AppComponent components;
-
-    /* Get router component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
-
-    oatpp::web::server::api::Endpoints docEndpoints;
-
-    /***
-     * REGISTER CONTROLLERS
-     */
-
-    for (size_t i = 0; i < controllers.size(); i++) {
-        auto ctrl = controllers[i];
-        router->addController(ctrl);
-        docEndpoints.append(ctrl->getEndpoints());
-    }
-
-
-    if (theState.enableSwaggerUi) {
-        router->addController(
-            oatpp::swagger::AsyncController::createShared(docEndpoints));
-    }
-
-    // static contents:
-    router->addController(std::make_shared<StaticContentsController>());
-
-    /***
-     * /REGISTER CONTROLLERS
-     */
-
-    /* Get connection handler component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>,
-                    connectionHandler);
-
-    /* Get connection provider component */
-    OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>,
-                    connectionProvider);
-
-    /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
-    oatpp::network::Server server(connectionProvider, connectionHandler);
-    theServer = &server;
-
-    /* Print info about server port */
-    OATPP_LOGi("WEBIF", "Server running on port {}",
-               connectionProvider->getProperty("port").toString());
-
-    /* Run server */
-    server.run();
-
-    OATPP_LOGi("WEBIF", "Server stopped on port {}",
-               connectionProvider->getProperty("port").toString());
+    //    registerController(std::make_shared<WebAdapterController>());
 }
 
 /**
@@ -102,11 +119,9 @@ static void run()
  */
 static int theMainLoop()
 {
-    oatpp::Environment::init();
-
     addInternalControllers();
 
-    run();
+    api.run();
 
     /* Print how much objects were created during app running, and what have left-probably leaked */
     /* Disable object counting for release builds using '-D OATPP_DISABLE_ENV_OBJECT_COUNTERS' flag for better performance */
