@@ -12,6 +12,8 @@
 
 #include "webapi/filters/webAdapter.hpp"
 #include "webapi/webApp.hpp"
+#include "webapi/controller/btaAdapterController.hpp"
+#include "webapi/controller/webAdapterController.hpp"
 
 using namespace std;
 using namespace toffy;
@@ -52,7 +54,24 @@ void setupGlobalState(SystemState &state, Player *player)
                  << endl;
         }
     }
+
+    // initialize oatpp controller objects:
 }
+
+/** perform controller-specific initialisation before registering to the web api & starting it */
+void registerOatppControllers(const SystemState &state, toffy::webapi::WebAdapter *webAdap)
+{
+    auto btaAdapCtrl = std::make_shared<BtaAdapterController>();
+
+    btaAdapCtrl->registerBta(state.bta);
+    registerController(btaAdapCtrl);
+
+    auto webAdapCtrl = std::make_shared<WebAdapterController>();
+    webAdapCtrl->registerCallbacks(webAdap);
+    registerController(webAdapCtrl);
+
+}
+
 
 /**
  *  main
@@ -90,6 +109,8 @@ int main(int argc, const char *argv[])
     // initialize web api linkage:
     toffy::webapi::WebAdapter *webAdap = new toffy::webapi::WebAdapter();
     player->filterBank()->add(webAdap);
+
+    registerOatppControllers(theState, webAdap);
 
     webAppStart(webAdap, &theState);
     // /web api

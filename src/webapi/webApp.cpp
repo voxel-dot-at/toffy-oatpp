@@ -26,6 +26,21 @@ using namespace toffy::webapi;
 namespace toffy {
 namespace webapi {
 
+static std::vector<std::shared_ptr<oatpp::web::server::api::ApiController>> controllers;
+
+
+void registerController(std::shared_ptr<oatpp::web::server::api::ApiController> controller)
+{
+    controllers.push_back(controller);
+}
+
+
+
+static void addInternalControllers()
+{
+//    registerController(std::make_shared<WebAdapterController>());
+}
+
 static void run()
 {
     /* Register Components in scope of run() method */
@@ -35,21 +50,17 @@ static void run()
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
     oatpp::web::server::api::Endpoints docEndpoints;
+
     /***
-     * REGISTER CONTORLLERS
+     * REGISTER CONTROLLERS
      */
 
-    auto webAdapCtrl = std::make_shared<WebAdapterController>();
-    webAdapCtrl->registerCallbacks(webAdap);
-    router->addController(webAdapCtrl);
-    docEndpoints.append(webAdapCtrl->getEndpoints());
-
-    auto btaAdapCtrl = std::make_shared<BtaAdapterController>();
-    if (systemState) {
-        btaAdapCtrl->registerBta(systemState->bta);
+    for (size_t i = 0; i < controllers.size(); i++) {
+        auto ctrl = controllers[i];
+        router->addController(ctrl);
+        docEndpoints.append(ctrl->getEndpoints());
     }
-    router->addController(btaAdapCtrl);
-    docEndpoints.append(btaAdapCtrl->getEndpoints());
+
 
     if (theState.enableSwaggerUi) {
         router->addController(
@@ -60,7 +71,7 @@ static void run()
     router->addController(std::make_shared<StaticContentsController>());
 
     /***
-     * /REGISTER CONTORLLERS
+     * /REGISTER CONTROLLERS
      */
 
     /* Get connection handler component */
@@ -92,6 +103,8 @@ static void run()
 static int theMainLoop()
 {
     oatpp::Environment::init();
+
+    addInternalControllers();
 
     run();
 
