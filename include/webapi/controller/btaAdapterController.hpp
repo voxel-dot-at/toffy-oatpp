@@ -85,6 +85,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Get Integration Time";
         info->description = "Get Integration Time";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
     ENDPOINT_ASYNC("GET", "/api/bta/integrationTime", GetIntegrationTime)
     {
@@ -110,6 +111,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Set Integration Time";
         info->description = "Set Integration Time";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
         info->pathParams.add<Int32>("time").description = "input a time value";
     }
     ENDPOINT_ASYNC("POST", "/api/bta/integrationTime/{time}", SetIntegrationTime)
@@ -154,6 +156,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Get Frame Rate";
         info->description = "Get Frame Rate";
+        info->addResponse<Float32>(Status::CODE_200, "application/json");
     }
     ENDPOINT_ASYNC("GET", "/api/bta/frameRate", GetFrameRate)
     {
@@ -179,6 +182,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Set Frame Rate";
         info->description = "Set Frame Rate";
+        info->addResponse<Float32>(Status::CODE_200, "application/json");
         info->pathParams.add<Float32>("rate").description = "input a rate value";
     }
     ENDPOINT_ASYNC("POST", "/api/bta/frameRate/{rate}", SetFrameRate)
@@ -223,6 +227,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Get Modulation Frequency";
         info->description = "Get Modulation Frequency";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
     ENDPOINT_ASYNC("GET", "/api/bta/modulationFrequency", GetModulationFrequency)
     {
@@ -247,6 +252,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Set Modulation Frequency";
         info->description = "Set Modulation Frequency";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
         info->pathParams.add<Int32>("freq").description = "input a modulation frequency";
     }
     ENDPOINT_ASYNC("POST", "/api/bta/modulationFrequency/{freq}", SetModulationFrequency)
@@ -291,6 +297,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Get Global Offset";
         info->description = "Get Global Offset";
+        info->addResponse<Float32>(Status::CODE_200, "application/json");
     }
     ENDPOINT_ASYNC("GET", "/api/bta/globalOffset", GetGlobalOffset)
     {
@@ -316,6 +323,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Set Global Offset";
         info->description = "Set Global Offset";
+        info->addResponse<Float32>(Status::CODE_200, "application/json");
         info->pathParams.add<Float32>("offset").description = "input a modulation frequency";
     }
     ENDPOINT_ASYNC("POST", "/api/bta/modulationFrequency/{offset}", SetGlobalOffset)
@@ -360,6 +368,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Get Register";
         info->description = "Return value is integer decimal not hexadecimal";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
         info->pathParams.add<String>("addr").description = "input can be decimal (123) or hexadecimal (0xabc)";
     }
     ENDPOINT_ASYNC("GET", "/api/bta/reg/{addr}", GetRegister)
@@ -403,6 +412,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
     {
         info->summary = "Set Register";
         info->description = "Return value is integer decimal not hexadecimal";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
         info->pathParams.add<String>("addr").description = "input can be decimal (123) or hexadecimal (0xabc)";
         info->pathParams.add<String>("value").description = "input can be decimal (123) or hexadecimal (0xabc)";
     }
