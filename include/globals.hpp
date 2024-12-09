@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "shared/syncApi.hpp"
+
 namespace toffy {
 
 class Player;
@@ -31,6 +33,9 @@ class SystemState
 
     toffy::Player *player = nullptr;
     toffy::capturers::Bta *bta = nullptr;
+
+    /// @brief the synchronisation API for syncing OpenCV threads against Oat++
+    SyncApi api;
 };
 
 /// @brief global application state; to be defined in the main application

@@ -16,7 +16,7 @@
 #include "oatpp/async/Executor.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-#include "webapi/filters/webAdapter.hpp"
+#include "filters/webAdapter.hpp"
 
 #include "toffy/frame.hpp"
 

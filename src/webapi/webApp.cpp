@@ -10,7 +10,9 @@
 #include "webapi/controller/staticContentsController.hpp"
 #include "webapi/controller/btaAdapterController.hpp"
 #include "webapi/controller/webAdapterController.hpp"
-#include "webapi/filters/webAdapter.hpp"
+#include "webapi/controller/frameInfoController.hpp"
+
+#include "filters/webAdapter.hpp"
 #include "webapi/swaggerComponent.hpp"
 #include "webapi/appComponent.hpp"
 

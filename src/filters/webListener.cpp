@@ -9,7 +9,7 @@
 
 #include <toffy/filter_helpers.hpp>
 
-#include "webapi/filters/webAdapter.hpp"
+#include "filters/webAdapter.hpp"
 
 #include "oatpp/async/Executor.hpp"
 #include "oatpp/async/Coroutine.hpp"

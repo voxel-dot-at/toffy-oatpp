@@ -9,7 +9,7 @@
 
 #include <toffy/filter_helpers.hpp>
 
-#include "webapi/filters/webAdapter.hpp"
+#include "filters/webAdapter.hpp"
 
 #include "oatpp/async/Executor.hpp"
 #include "oatpp/async/Coroutine.hpp"
@@ -35,7 +35,6 @@ WebAdapter::WebAdapter() : Filter(WebAdapter::id_name, _filter_counter)
     _filter_counter++;
     // bool worked = this->lock.try_lock();
     // cout << "WebAdapter::WebAdapter() locked? " << worked << endl;
-
 }
 
 // virtual int loadConfig(const boost::property_tree::ptree& pt);
@@ -58,6 +57,50 @@ void WebAdapter::updateConfig(const boost::property_tree::ptree& pt)
 
 bool WebAdapter::filter(const Frame& in, Frame& out)
 {
+    if (!api) {
+        return false;
+    }
+    unsigned int fc = in.optUInt("fc", -1);
+    this->fc = fc;
+
+    // so some stuff, tell everybody that there's work:
+    {
+        std::lock_guard<oatpp::async::Lock> guard(api->lock);
+        api->fc = fc;
+        api->frame = &in;
+
+        cout << "WEBADAP " << api->fc << endl;
+
+        matPtr z = in.optMatPtr("z", 0);
+
+        std::string* jpeg = compressMat2Jpeg(*z);
+        api->zJpeg = jpeg;
+    }
+    api->cv.notifyAll();
+
+    return true;
+}
+std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
+{
+    // imgencode params:
+    std::vector<int> params;
+    params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    params.push_back(90);  // 0..100 ; 100=high quality
+
+    std::vector<uchar> outbuf(img.rows * img.cols * 3);
+
+    cv::imencode(".jpg", img, outbuf, params);
+    size_t len = outbuf.size();
+    char* s = (char*)&outbuf[0];
+
+    // constructor from buffer: Copies the first len characters from the array
+    // of characters pointed by s
+    std::string* str = new string(s, len);
+    return str;
+}
+
+bool WebAdapter::filterOld(const Frame& in, Frame& out)
+{
     // bool worked = this->lock.try_lock();
     // if (!worked) {
     //     cout << "WebAdapter::filter() FAILED TO LOCK " << worked << " " << listeners.size() << " single " << singleShots.size() << endl;
@@ -65,7 +108,9 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
 
     this->fc = in.optUInt("fc", -1);
 
-    cout << "WebAdapter::filter() listeners..? " << listeners.size() << " single " << singleShots.size() << " rc " << resource.counter <<  endl;
+    cout << "WebAdapter::filter() listeners..? " << listeners.size()
+         << " single " << singleShots.size() << " rc " << resource.counter
+         << endl;
     {
         std::lock_guard<oatpp::async::Lock> guard(lock);
         // std::lock_guard<oatpp::async::Lock> guard(this->lock);
@@ -79,17 +124,19 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             weli->haveWork(in);
         }
 
-        for (auto iter = singleShots.begin(); iter != singleShots.end(); iter++) {
+        for (auto iter = singleShots.begin(); iter != singleShots.end();
+             iter++) {
             (*iter)->haveWork(in);
         }
         singleShots.clear();
     }
-    cout << "WebAdapter::filter() GO" << " rc " << resource.counter << endl;
+    cout << "WebAdapter::filter() GO"
+         << " rc " << resource.counter << endl;
     // this->lock.unlock();
-    theCv().notifyAll(); 
+    theCv().notifyAll();
 
     resource.counter = 0;
-    cout << "WebAdapter::filter() DONE" << " rc " << resource.counter << endl;
+    cout << "WebAdapter::filter() DONE"
+         << " rc " << resource.counter << endl;
     return true;
 }
-

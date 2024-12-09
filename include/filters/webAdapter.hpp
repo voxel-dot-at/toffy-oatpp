@@ -1,25 +1,22 @@
-#ifndef WEB_ADAPTER_
-#define WEB_ADAPTER_
-
+#pragma once
 /**
  * @brief find a colored box via hsv analysis
  * 
  */
-#pragma once
 
-#include <string>
 
 #include <condition_variable>
 #include <mutex>
 #include <vector>
+#include <string>
 #include <thread>
 
 #include "toffy/filter.hpp"
 
-#include "oatpp/async/Executor.hpp"
 #include "oatpp/async/Coroutine.hpp"
-// #include "oatpp/core/data/resource/Resource.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
+
+#include "shared/syncApi.hpp"
 
 #include "webapi/filters/webListener.hpp"
 
@@ -39,10 +36,14 @@ class WebAdapter : public Filter
     oatpp::async::ConditionVariable cv;
     oatpp::async::Lock lock;
 
+    SyncApi* api = nullptr;
+
    public:
     WebAdapter();
 
     virtual ~WebAdapter() {}
+
+    void setApi(SyncApi* api) { this->api = api;}
 
     unsigned int fc = -1;
 
@@ -59,6 +60,9 @@ class WebAdapter : public Filter
 
     virtual bool filter(const Frame& in, Frame& out);
 
+    // old stuff, goes away
+    virtual bool filterOld(const Frame& in, Frame& out);
+
     // registers from an extrnal thread, will be released via newFrameSema:
     // oatpp::async::Action fetchNextFrame(WebListener* weli);
 
@@ -67,11 +71,11 @@ class WebAdapter : public Filter
    private:
     static size_t _filter_counter;
     std::vector<WebListener*> singleShots;
+
+    std::string* compressMat2Jpeg(const cv::Mat& mat);
 };
 
 extern toffy::Filter* CreateWebAdapter(void);
 
 }  // namespace webapi
 }  // namespace toffy
-
-#endif
