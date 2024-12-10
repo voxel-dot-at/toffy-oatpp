@@ -71,15 +71,35 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
 
         cout << "WEBADAP " << api->fc << endl;
 
-        matPtr z = in.optMatPtr("z", 0);
+        if (in.hasKey("depth")) {
+            matPtr z = in.optMatPtr("depth", 0);
 
-        std::string* jpeg = compressMat2Jpeg(*z);
-        api->zJpeg = jpeg;
+            cv::Mat normalizedDepth;
+            cv::normalize(*z, normalizedDepth, 0, 255, cv::NORM_MINMAX);
+
+            std::string* jpeg = compressMat2Jpeg(normalizedDepth);
+            api->zJpeg = jpeg;
+        } else {
+            cout << "NO  depth" << endl;
+        }
+
+        if (in.hasKey("ampl")) {
+            matPtr z = in.optMatPtr("ampl", 0);
+
+            cv::Mat normalizedDepth;
+            cv::normalize(*z, normalizedDepth, 0, 255, cv::NORM_MINMAX);
+
+            std::string* jpeg = compressMat2Jpeg(normalizedDepth);
+            api->yJpeg = jpeg;
+        } else {
+            cout << "NO  amplitude" << endl;
+        }
     }
     api->cv.notifyAll();
 
     return true;
 }
+
 std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
 {
     // imgencode params:

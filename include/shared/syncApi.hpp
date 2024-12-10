@@ -23,4 +23,5 @@ class SyncApi
 
     const toffy::Frame* frame = nullptr;
     std::string* zJpeg = nullptr;
+    std::string* yJpeg = nullptr;
 };
