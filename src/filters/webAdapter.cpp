@@ -63,7 +63,6 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
     unsigned int fc = in.optUInt("fc", -1);
     this->fc = fc;
 
-    // so some stuff, tell everybody that there's work:
     {
         std::lock_guard<oatpp::async::Lock> guard(api->lock);
         api->fc = fc;
@@ -74,13 +73,22 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         if (in.hasKey("depth")) {
             matPtr z = in.optMatPtr("depth", 0);
 
-            cv::Mat normalizedDepth;
-            cv::normalize(*z, normalizedDepth, 0, 255, cv::NORM_MINMAX);
+            double minVal, maxVal;
+            cv::minMaxLoc(*z, &minVal, &maxVal);
 
-            std::string* jpeg = compressMat2Jpeg(normalizedDepth);
+            double alpha = 255.0 / (maxVal - minVal); // scaling factor for contrast adjustment in the image
+            double beta = -minVal * 255.0 / (maxVal - minVal); // offset for brightness adjustment
+
+            cv::Mat scaledDepth;
+            (*z).convertTo(scaledDepth, CV_8U, alpha, beta);
+
+            cv::Mat coloredDepth;
+            cv::applyColorMap(scaledDepth, coloredDepth, cv::COLORMAP_JET);
+
+            std::string* jpeg = compressMat2Jpeg(coloredDepth);
             api->zJpeg = jpeg;
         } else {
-            cout << "NO  depth" << endl;
+            cout << "NO depth" << endl;
         }
 
         if (in.hasKey("ampl")) {
@@ -92,13 +100,14 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             std::string* jpeg = compressMat2Jpeg(normalizedDepth);
             api->yJpeg = jpeg;
         } else {
-            cout << "NO  amplitude" << endl;
+            cout << "NO amplitude" << endl;
         }
     }
     api->cv.notifyAll();
 
     return true;
 }
+
 
 std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
 {
