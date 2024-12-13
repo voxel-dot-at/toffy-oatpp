@@ -326,13 +326,13 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
         info->addResponse<Float32>(Status::CODE_200, "application/json");
         info->pathParams.add<Float32>("offset").description = "input a modulation frequency";
     }
-    ENDPOINT_ASYNC("POST", "/api/bta/modulationFrequency/{offset}", SetGlobalOffset)
+    ENDPOINT_ASYNC("POST", "/api/bta/globalOffset/{offset}", SetGlobalOffset)
     {
         ENDPOINT_ASYNC_INIT(SetGlobalOffset)
 
         Action act() override
         {
-            OATPP_LOGd("BTA", "POST api/bta/modulationFrequency");
+            OATPP_LOGd("BTA", "POST api/bta/globalOffset");
             BtaAdapterController* self = (BtaAdapterController*)controller;
             auto offsetStr = request->getPathVariable("offset");
             BtaWrapper* s = self->bta->getSensor();
