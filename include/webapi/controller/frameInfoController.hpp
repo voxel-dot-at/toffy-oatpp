@@ -71,7 +71,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             return _return(response);
         }
-    };  // ENDPOINT_ASYNC("GET", "fc", GetFrameCounter
+    };
 
     ENDPOINT_INFO(GetFrameDepth)
     {
@@ -104,35 +104,6 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             return _return(response);
         }
     };
-
-    //    ENDPOINT_INFO(GetFrameInfo)
-    //     {
-    //         info->summary = "get frameInfo";
-    //         info->description = "Get the next frame counter, sync via timer";
-    //         info->addResponse<Int32>(Status::CODE_200, "application/json");
-    //     }
-    //     ENDPOINT_ASYNC("GET", "/frame/info", GetFrameInfo)
-    //     {
-    //         ENDPOINT_ASYNC_INIT(GetFrameCounter);
-
-    //         Action act() override
-    //         {
-    //             if (!controller->api) {
-    //                 return _return(controller->createResponse(Status::CODE_404));
-    //             }
-
-    //             auto body = std::make_shared<
-    //                 oatpp::web::protocol::http::outgoing::StreamingBody>(
-    //                 std::make_shared<TimerReadCallback>(*controller->api,
-    //                                                     controller));
-
-    //             auto response =
-    //                 OutgoingResponse::createShared(Status::CODE_200, body);
-    //             response->putHeader("content-type", "application/json");
-
-    //             return _return(response);
-    //         }
-    //     };  // ENDPOINT_ASYNC("GET", "fc", GetFrameCounter
 };
 
 /** timer read callback class - spins until new data is available 
