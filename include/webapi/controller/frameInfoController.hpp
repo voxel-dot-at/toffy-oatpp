@@ -9,7 +9,7 @@
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
 
-#include "webapi/dto/webAdapterDto.hpp"
+#include "webapi/dto/frameDto.hpp"
 
 #include "shared/syncApi.hpp"
 
