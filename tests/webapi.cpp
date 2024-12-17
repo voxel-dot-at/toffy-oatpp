@@ -8,7 +8,6 @@
 
 #include "webapi/controller/staticContentsController.hpp"
 #include "webapi/controller/btaAdapterController.hpp"
-#include "webapi/controller/webAdapterController.hpp"
 #include "filters/webAdapter.hpp"
 #include "webapi/webAppComponent.hpp"
 #include "webapi/swaggerComponent.hpp"

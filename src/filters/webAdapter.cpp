@@ -61,14 +61,18 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         return false;
     }
     unsigned int fc = in.optUInt("fc", -1);
-    this->fc = fc;
+    float ledTemp = in.optFloat("lt", -1);
+    float mainTemp = in.optFloat("mt", -1);
 
     {
         std::lock_guard<oatpp::async::Lock> guard(api->lock);
         api->fc = fc;
+        api->ledTemp = ledTemp;
+        api->mainTemp = mainTemp;
         api->frame = &in;
 
         cout << "WEBADAP " << api->fc << endl;
+
 
         if (in.hasKey("depth")) {
             matPtr z = in.optMatPtr("depth", 0);

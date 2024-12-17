@@ -26,21 +26,20 @@ class FrameDto : public oatpp::DTO {
 
   DTO_FIELD(Int32, fc);
 
-  DTO_FIELD(Int32, ts);
-
   DTO_FIELD(Int32, mainTemp);
 
   DTO_FIELD(Int32, ledTemp);
+};
+
+class FrameMetaDto : public oatpp::DTO {
+
+  DTO_INIT(FrameMetaDto, DTO)
 
   DTO_FIELD(Vector<Object<SlotInfoDto>>, slots) = {};
 
   DTO_FIELD(Vector<Object<SlotInfoDto>>, mats) = {};
 
   DTO_FIELD(Vector<String>, fields);
-
-//   DTO_FIELD(Vector<Int16>, dts);
-
-//   DTO_FIELD(Vector<String>, desc);
 };
 
 

@@ -9,17 +9,22 @@
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
 
+#include "webapi/dto/webAdapterDto.hpp"
+
 #include "shared/syncApi.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController)  /// <-- Begin Code-Gen
 
 class FrameInfoReadCallback;
+class FrameMetaReadCallback;
 class FrameJpegReadCallback;
 
 class FrameInfoController : public oatpp::web::server::api::ApiController
 {
-    friend class
-        FrameInfoReadCallback;  // for now convenience for the object mapper
+    // for now convenience for the object mapper
+
+    friend class FrameInfoReadCallback;
+    friend class FrameMetaReadCallback;
 
    private:
     typedef FrameInfoController __ControllerType;
@@ -46,7 +51,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
    public:  // ENDPOINTS:
     ENDPOINT_INFO(GetFrameInfo)
     {
-        info->summary = "get frameInfo";
+        info->summary = "Get Frame Info";
         info->description = "Get the next frame counter, sync via timer";
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
@@ -63,6 +68,35 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             auto body = std::make_shared<
                 oatpp::web::protocol::http::outgoing::StreamingBody>(
                 std::make_shared<FrameInfoReadCallback>(*controller->api,
+                                                        controller));
+
+            auto response =
+                OutgoingResponse::createShared(Status::CODE_200, body);
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
+        }
+    };
+
+    ENDPOINT_INFO(GetFrameMeta)
+    {
+        info->summary = "Get Frame Meta Info";
+        info->description = "Get the Frame Meta Info";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
+    }
+    ENDPOINT_ASYNC("GET", "/frame/meta", GetFrameMeta)
+    {
+        ENDPOINT_ASYNC_INIT(GetFrameMeta);
+
+        Action act() override
+        {
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            auto body = std::make_shared<
+                oatpp::web::protocol::http::outgoing::StreamingBody>(
+                std::make_shared<FrameMetaReadCallback>(*controller->api,
                                                         controller));
 
             auto response =
@@ -147,7 +181,62 @@ class FrameInfoReadCallback : public oatpp::data::stream::ReadCallback
 
         auto dto = FrameDto::createShared();
         dto->fc = api.fc;
-        // dto->exposure = api.exposure;
+        dto->ledTemp = api.ledTemp;
+        dto->mainTemp = api.mainTemp;
+
+        oatpp::String s = self->om->writeToString(dto);
+
+        const std::string& ss = *s;
+        len = ss.size();
+
+        memcpy(buffer, ss.c_str(), len + 1);
+        return len;
+    }
+};
+
+class FrameMetaReadCallback : public oatpp::data::stream::ReadCallback
+{
+   private:
+    SyncApi& api;
+    const FrameInfoController* self;
+    int len = 0;
+
+   public:
+    FrameMetaReadCallback(SyncApi& api, const FrameInfoController* self)
+        : api(api), self(self)
+    {
+    }
+
+    oatpp::v_io_size read(void* buffer, v_buff_size count,
+                          oatpp::async::Action& action) override
+    {
+        OATPP_LOGd("CAMH", "ticked {} dlen={}", api.fc, len);
+        if (len) {
+            // second iteration with new contents - tell the body-builder we are done:
+            action = oatpp::async::Action::createActionByType(
+                oatpp::async::Action::TYPE_NONE);
+            return 0;
+        }
+        // first iteration with new contents - new data available, let's prepare an answer
+
+        const toffy::Frame& frame = *api.frame;
+        std::vector<toffy::Frame::SlotInfo> slots;
+        frame.info(slots);
+
+        auto dto = FrameMetaDto::createShared();
+        dto->slots = {};
+        for (auto iter = slots.begin(); iter != slots.end();
+             iter++) {
+            auto slot = SlotInfoDto::createShared();
+            slot->name = iter->key;
+            slot->dt = iter->dt;
+            slot->desc = iter->description;
+            dto->slots->push_back(slot);
+
+            if (iter->dt == toffy::Frame::SlotDataType::Mat) {
+                dto->mats->push_back(slot);
+            }
+        }
 
         oatpp::String s = self->om->writeToString(dto);
 

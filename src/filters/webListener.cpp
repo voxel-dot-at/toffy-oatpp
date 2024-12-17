@@ -76,11 +76,9 @@ bool FrameInfoListener::process(const Frame& in)
     slots.clear();
     in.info(slots);
 
-    // ts = in.optUInt("ts", -1);
     fc = in.optUInt("fc", 0);
     ledTemp = in.optFloat("lt", -1);
     mainTemp = in.optFloat("mt", -1);
-    generalTemp = in.optFloat("gt", -1);
 
     cout << "FrameInfoListener::process() " << ledTemp << endl;
     auto it = slots.begin();

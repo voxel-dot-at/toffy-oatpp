@@ -85,9 +85,8 @@ class FrameInfoListener : public WebListener
 
     // std::vector<std::string> keys;
     std::vector<Frame::SlotInfo> slots;
-    int ts;
     int fc;
-    float ledTemp, mainTemp, generalTemp;
+    float ledTemp, mainTemp;
 
    protected:
     virtual bool process(const Frame& in);

@@ -13,7 +13,6 @@
 #include "filters/webAdapter.hpp"
 #include "webapi/webApp.hpp"
 #include "webapi/controller/btaAdapterController.hpp"
-#include "webapi/controller/webAdapterController.hpp"
 #include "webapi/controller/frameInfoController.hpp"
 
 using namespace std;
@@ -66,11 +65,6 @@ void registerOatppControllers(SystemState &state, toffy::webapi::WebAdapter *web
 
     btaAdapCtrl->registerBta(state.bta);
     registerController(btaAdapCtrl);
-
-    auto webAdapCtrl = std::make_shared<WebAdapterController>();
-    webAdapCtrl->registerCallbacks(webAdap);
-    registerController(webAdapCtrl);
-
 
     auto fic = std::make_shared<FrameInfoController>();
     fic->setApi(&state.api);
