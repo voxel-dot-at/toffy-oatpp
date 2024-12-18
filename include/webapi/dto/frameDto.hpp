@@ -38,3 +38,11 @@ class FrameMetaDto : public oatpp::DTO {
 
   DTO_FIELD(Vector<String>, fields);
 };
+
+class MinMaxDto : public oatpp::DTO {
+  DTO_INIT(MinMaxDto, DTO)
+
+  DTO_FIELD(Int32, minVal);
+  
+  DTO_FIELD(Int32, maxVal);
+};

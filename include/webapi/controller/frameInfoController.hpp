@@ -107,11 +107,73 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
+    ENDPOINT_INFO(SetMinVal)
+    {
+        info->summary = "Set Min Value for Image Processing";
+        info->description =
+            "Allows setting a custom min value for processing the frame image.";
+        info->pathParams.add<String>("minVal").description =
+            "The custom min value for image processing.";
+    }
+
+    ENDPOINT_ASYNC("POST", "/setMinVal/{minVal}", SetMinVal)
+    {
+        ENDPOINT_ASYNC_INIT(SetMinVal);
+
+        Action act() override
+        {
+            auto minValStr = request->getPathVariable("minVal");
+
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            double minVal = std::stod(minValStr->c_str());
+            controller->api->minVal = minVal;
+
+            double value = controller->api->minVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
+    ENDPOINT_INFO(SetMaxVal)
+    {
+        info->summary = "Set Max Value for Image Processing";
+        info->description =
+            "Allows setting a custom max value for processing the frame image.";
+        info->pathParams.add<String>("maxVal").description =
+            "The custom max value for image processing.";
+    }
+
+    ENDPOINT_ASYNC("POST", "/setMaxVal/{maxVal}", SetMaxVal)
+    {
+        ENDPOINT_ASYNC_INIT(SetMaxVal);
+
+        Action act() override
+        {
+            auto maxValStr = request->getPathVariable("maxVal");
+
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+            double maxVal = std::stod(maxValStr->c_str());
+            controller->api->maxVal = maxVal;
+
+            double value = controller->api->maxVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
     ENDPOINT_INFO(GetFrameDepth)
     {
         info->summary = "Get Frame JPEG";
         info->description = "Get the next frame as a JPEG image";
-        info->pathParams.add<String>("path").description = "To get `depth` or `ampl` image, type either";
+        info->pathParams.add<String>("path").description =
+            "To get `depth` or `ampl` image, type either";
     }
 
     ENDPOINT_ASYNC("GET", "/frame/{path}", GetFrameDepth)
@@ -225,8 +287,7 @@ class FrameMetaReadCallback : public oatpp::data::stream::ReadCallback
 
         auto dto = FrameMetaDto::createShared();
         dto->slots = {};
-        for (auto iter = slots.begin(); iter != slots.end();
-             iter++) {
+        for (auto iter = slots.begin(); iter != slots.end(); iter++) {
             auto slot = SlotInfoDto::createShared();
             slot->name = iter->key;
             slot->dt = iter->dt;

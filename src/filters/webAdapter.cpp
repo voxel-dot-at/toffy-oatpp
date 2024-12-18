@@ -77,11 +77,24 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         if (in.hasKey("depth")) {
             matPtr z = in.optMatPtr("depth", 0);
 
-            double minVal, maxVal;
-            cv::minMaxLoc(*z, &minVal, &maxVal);
+            double ui_minVal = api->minVal;
+            double ui_maxVal = api->maxVal;
+            double alpha, beta, minVal, maxVal;
 
-            double alpha = 255.0 / (maxVal - minVal); // scaling factor for contrast adjustment in the image
-            double beta = -minVal * 255.0 / (maxVal - minVal); // offset for brightness adjustment
+            // alpha: scaling factor for contrast adjustment in the image
+            // beta: offset for brightness adjustment
+            if (ui_maxVal >= 0 && ui_minVal >= 0 && ui_maxVal > ui_minVal)
+            {
+                alpha = 255.0 / (ui_maxVal - ui_minVal);
+                beta = -ui_minVal * 255.0 / (ui_maxVal - ui_minVal);
+            }
+            else
+            {
+                cv::minMaxLoc(*z, &minVal, &maxVal);
+
+                alpha = 255.0 / (maxVal - minVal);
+                beta = -minVal * 255.0 / (maxVal - minVal);
+            }
 
             cv::Mat scaledDepth;
             (*z).convertTo(scaledDepth, CV_8U, alpha, beta);
