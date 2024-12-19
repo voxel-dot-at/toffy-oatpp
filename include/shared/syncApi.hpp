@@ -30,4 +30,6 @@ class SyncApi
 
     double minVal = -1;
     double maxVal = -1;
+    double ui_minVal = -1;
+    double ui_maxVal = -1;
 };

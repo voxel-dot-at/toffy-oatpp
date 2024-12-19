@@ -153,9 +153,9 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             }
 
             double minVal = std::stod(minValStr->c_str());
-            controller->api->minVal = minVal;
+            controller->api->ui_minVal = minVal;
 
-            double value = controller->api->minVal;
+            double value = controller->api->ui_minVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
@@ -207,9 +207,9 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
                 return _return(controller->createResponse(Status::CODE_404));
             }
             double maxVal = std::stod(maxValStr->c_str());
-            controller->api->maxVal = maxVal;
+            controller->api->ui_maxVal = maxVal;
 
-            double value = controller->api->maxVal;
+            double value = controller->api->ui_maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));

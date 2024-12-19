@@ -73,24 +73,23 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
 
         cout << "WEBADAP " << api->fc << endl;
 
-
         if (in.hasKey("depth")) {
             matPtr z = in.optMatPtr("depth", 0);
 
-            double ui_minVal = api->minVal;
-            double ui_maxVal = api->maxVal;
+            double ui_minVal = api->ui_minVal;
+            double ui_maxVal = api->ui_maxVal;
             double alpha, beta, minVal, maxVal;
 
             // alpha: scaling factor for contrast adjustment in the image
             // beta: offset for brightness adjustment
-            if (ui_maxVal >= 0 && ui_minVal >= 0 && ui_maxVal > ui_minVal)
-            {
+            if (ui_maxVal >= 0 && ui_minVal >= 0 && ui_maxVal > ui_minVal) {
                 alpha = 255.0 / (ui_maxVal - ui_minVal);
                 beta = -ui_minVal * 255.0 / (ui_maxVal - ui_minVal);
-            }
-            else
-            {
+            } else {
                 cv::minMaxLoc(*z, &minVal, &maxVal);
+
+                api->maxVal = maxVal;
+                api->minVal = minVal;
 
                 alpha = 255.0 / (maxVal - minVal);
                 beta = -minVal * 255.0 / (maxVal - minVal);
@@ -124,7 +123,6 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
 
     return true;
 }
-
 
 std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
 {
