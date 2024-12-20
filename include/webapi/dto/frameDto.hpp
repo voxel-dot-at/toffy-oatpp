@@ -42,7 +42,7 @@ class FrameMetaDto : public oatpp::DTO {
 class MinMaxDto : public oatpp::DTO {
   DTO_INIT(MinMaxDto, DTO)
 
-  DTO_FIELD(Int32, minVal);
+  DTO_FIELD(Float32, minVal);
   
-  DTO_FIELD(Int32, maxVal);
+  DTO_FIELD(Float32, maxVal);
 };

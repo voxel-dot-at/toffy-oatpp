@@ -107,6 +107,34 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
+    ENDPOINT_INFO(GetMinMaxVal)
+    {
+        info->summary = "Get Min and Max Value for Image Processing";
+        info->description = "Allows setting a custom min and max value for processing the frame image.";
+        info->addResponse<Object<MinMaxDto>>(Status::CODE_200, "application/json");
+    }
+    
+    ENDPOINT_ASYNC("GET", "/frame/getMinMaxVal", GetMinMaxVal)
+    {
+        ENDPOINT_ASYNC_INIT(GetMinMaxVal)
+
+        Action act() override
+        {
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            auto dto = MinMaxDto::createShared();
+
+            dto->minVal = controller->api->minVal;
+            dto->maxVal = controller->api->maxVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, controller->om->writeToString(dto)
+            ));
+        }
+    };
+
     ENDPOINT_INFO(GetMinVal)
     {
         info->summary = "Get Min Value for Image Processing";
