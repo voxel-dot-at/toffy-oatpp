@@ -8,6 +8,14 @@
 
 /// the global i to sync backend process and frontend api:
 
+typedef struct {
+
+    double minVal = -1;
+    double maxVal = -1;
+    double ui_minVal = -1;
+    double ui_maxVal = -1;
+} MinMaxSettings;
+
 class SyncApi
 {
    public:
@@ -28,8 +36,6 @@ class SyncApi
     std::string* zJpeg = nullptr;
     std::string* yJpeg = nullptr;
 
-    double minVal = -1;
-    double maxVal = -1;
-    double ui_minVal = -1;
-    double ui_maxVal = -1;
+    MinMaxSettings depthSettings;
+    MinMaxSettings amplSettings;
 };

@@ -107,16 +107,16 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
-    ENDPOINT_INFO(GetMinMaxVal)
+    ENDPOINT_INFO(GetDepthMinMaxVal)
     {
         info->summary = "Get Min and Max Value for Image Processing";
         info->description = "Allows setting a custom min and max value for processing the frame image.";
         info->addResponse<Object<MinMaxDto>>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/getMinMaxVal", GetMinMaxVal)
+    ENDPOINT_ASYNC("GET", "/frame/depthMinMaxVal", GetDepthMinMaxVal)
     {
-        ENDPOINT_ASYNC_INIT(GetMinMaxVal)
+        ENDPOINT_ASYNC_INIT(GetDepthMinMaxVal)
 
         Action act() override
         {
@@ -126,8 +126,8 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             auto dto = MinMaxDto::createShared();
 
-            dto->minVal = controller->api->minVal;
-            dto->maxVal = controller->api->maxVal;
+            dto->minVal = controller->api->depthSettings.minVal;
+            dto->maxVal = controller->api->depthSettings.maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, controller->om->writeToString(dto)
@@ -135,16 +135,16 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
-    ENDPOINT_INFO(GetMinVal)
+    ENDPOINT_INFO(GetDepthMinVal)
     {
         info->summary = "Get Min Value for Image Processing";
         info->description = "Allows setting a custom min value for processing the frame image.";
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/getMinVal", GetMinVal)
+    ENDPOINT_ASYNC("GET", "/frame/depthMinVal", GetDepthMinVal)
     {
-        ENDPOINT_ASYNC_INIT(GetMinVal)
+        ENDPOINT_ASYNC_INIT(GetDepthMinVal)
 
         Action act() override
         {
@@ -152,14 +152,14 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
                 return _return(controller->createResponse(Status::CODE_404));
             }
 
-            double value = controller->api->minVal;
+            double value = controller->api->depthSettings.minVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
         }
     };
 
-    ENDPOINT_INFO(SetMinVal)
+    ENDPOINT_INFO(SetDepthMinVal)
     {
         info->summary = "Set Min Value for Image Processing";
         info->description =
@@ -168,9 +168,9 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom min value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/setMinVal/{minVal}", SetMinVal)
+    ENDPOINT_ASYNC("POST", "/frame/depthMinVal/{minVal}", SetDepthMinVal)
     {
-        ENDPOINT_ASYNC_INIT(SetMinVal);
+        ENDPOINT_ASYNC_INIT(SetDepthMinVal);
 
         Action act() override
         {
@@ -181,25 +181,25 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             }
 
             double minVal = std::stod(minValStr->c_str());
-            controller->api->ui_minVal = minVal;
+            controller->api->depthSettings.ui_minVal = minVal;
 
-            double value = controller->api->ui_minVal;
+            double value = controller->api->depthSettings.ui_minVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
         }
     };
 
-    ENDPOINT_INFO(GetMaxVal)
+    ENDPOINT_INFO(GetDepthMaxVal)
     {
         info->summary = "Get Max Value for Image Processing";
         info->description = "Allows setting a custom max value for processing the frame image.";
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
 
-    ENDPOINT_ASYNC("GET", "/frame/getMaxVal", GetMaxVal)
+    ENDPOINT_ASYNC("GET", "/frame/depthMaxVal", GetDepthMaxVal)
     {
-        ENDPOINT_ASYNC_INIT(GetMaxVal)
+        ENDPOINT_ASYNC_INIT(GetDepthMaxVal)
 
         Action act() override
         {
@@ -207,14 +207,14 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
                 return _return(controller->createResponse(Status::CODE_404));
             }
 
-            double value = controller->api->maxVal;
+            double value = controller->api->depthSettings.maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
         }
     };
 
-    ENDPOINT_INFO(SetMaxVal)
+    ENDPOINT_INFO(SetDepthMaxVal)
     {
         info->summary = "Set Max Value for Image Processing";
         info->description =
@@ -223,9 +223,9 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom max value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/setMaxVal/{maxVal}", SetMaxVal)
+    ENDPOINT_ASYNC("POST", "/frame/depthMaxVal/{maxVal}", SetDepthMaxVal)
     {
-        ENDPOINT_ASYNC_INIT(SetMaxVal);
+        ENDPOINT_ASYNC_INIT(SetDepthMaxVal);
 
         Action act() override
         {
@@ -235,9 +235,9 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
                 return _return(controller->createResponse(Status::CODE_404));
             }
             double maxVal = std::stod(maxValStr->c_str());
-            controller->api->ui_maxVal = maxVal;
+            controller->api->depthSettings.ui_maxVal = maxVal;
 
-            double value = controller->api->ui_maxVal;
+            double value = controller->api->depthSettings.ui_maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));

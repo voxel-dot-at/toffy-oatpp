@@ -76,8 +76,8 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         if (in.hasKey("depth")) {
             matPtr z = in.optMatPtr("depth", 0);
 
-            double ui_minVal = api->ui_minVal;
-            double ui_maxVal = api->ui_maxVal;
+            double ui_minVal = api->depthSettings.ui_minVal;
+            double ui_maxVal = api->depthSettings.ui_maxVal;
             double alpha, beta, minVal, maxVal;
 
             // alpha: scaling factor for contrast adjustment in the image
@@ -88,8 +88,8 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             } else {
                 cv::minMaxLoc(*z, &minVal, &maxVal);
 
-                api->maxVal = maxVal;
-                api->minVal = minVal;
+                api->depthSettings.maxVal = maxVal;
+                api->depthSettings.minVal = minVal;
 
                 alpha = 255.0 / (maxVal - minVal);
                 beta = -minVal * 255.0 / (maxVal - minVal);
