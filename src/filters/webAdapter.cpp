@@ -110,10 +110,29 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         if (in.hasKey("ampl")) {
             matPtr z = in.optMatPtr("ampl", 0);
 
-            cv::Mat normalizedDepth;
-            cv::normalize(*z, normalizedDepth, 0, 255, cv::NORM_MINMAX);
+            double ui_minVal = api->amplSettings.ui_minVal;
+            double ui_maxVal = api->amplSettings.ui_maxVal;
+            double alpha, beta, minVal, maxVal;
 
-            std::string* jpeg = compressMat2Jpeg(normalizedDepth);
+            // alpha: scaling factor for contrast adjustment in the image
+            // beta: offset for brightness adjustment
+            if (ui_maxVal >= 0 && ui_minVal >= 0 && ui_maxVal > ui_minVal) {
+                alpha = 255.0 / (ui_maxVal - ui_minVal);
+                beta = -ui_minVal * 255.0 / (ui_maxVal - ui_minVal);
+            } else {
+                cv::minMaxLoc(*z, &minVal, &maxVal);
+
+                api->amplSettings.maxVal = maxVal;
+                api->amplSettings.minVal = minVal;
+
+                alpha = 255.0 / (maxVal - minVal);
+                beta = -minVal * 255.0 / (maxVal - minVal);
+            }
+
+            cv::Mat scaledDepth;
+            (*z).convertTo(scaledDepth, CV_8U, alpha, beta);
+
+            std::string* jpeg = compressMat2Jpeg(scaledDepth);
             api->yJpeg = jpeg;
         } else {
             cout << "NO amplitude" << endl;

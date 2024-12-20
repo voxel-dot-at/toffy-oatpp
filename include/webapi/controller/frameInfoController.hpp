@@ -135,6 +135,34 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
+    ENDPOINT_INFO(GetAmplMinMaxVal)
+    {
+        info->summary = "Get Min and Max Value for Image Processing";
+        info->description = "Allows setting a custom min and max value for processing the frame image.";
+        info->addResponse<Object<MinMaxDto>>(Status::CODE_200, "application/json");
+    }
+    
+    ENDPOINT_ASYNC("GET", "/frame/amplMinMaxVal", GetAmplMinMaxVal)
+    {
+        ENDPOINT_ASYNC_INIT(GetAmplMinMaxVal)
+
+        Action act() override
+        {
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            auto dto = MinMaxDto::createShared();
+
+            dto->minVal = controller->api->amplSettings.minVal;
+            dto->maxVal = controller->api->amplSettings.maxVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, controller->om->writeToString(dto)
+            ));
+        }
+    };
+
     ENDPOINT_INFO(GetDepthMinVal)
     {
         info->summary = "Get Min Value for Image Processing";
@@ -153,6 +181,30 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             }
 
             double value = controller->api->depthSettings.minVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
+    ENDPOINT_INFO(GetAmplMinVal)
+    {
+        info->summary = "Get Min Value for Image Processing";
+        info->description = "Allows setting a custom min value for processing the frame image.";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
+    }
+    
+    ENDPOINT_ASYNC("GET", "/frame/amplMinVal", GetAmplMinVal)
+    {
+        ENDPOINT_ASYNC_INIT(GetAmplMinVal)
+
+        Action act() override
+        {
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            double value = controller->api->amplSettings.minVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
@@ -190,6 +242,37 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         }
     };
 
+    ENDPOINT_INFO(SetAmplMinVal)
+    {
+        info->summary = "Set Min Value for Image Processing";
+        info->description =
+            "Allows setting a custom min value for processing the frame image.";
+        info->pathParams.add<String>("minVal").description =
+            "The custom min value for image processing.";
+    }
+
+    ENDPOINT_ASYNC("POST", "/frame/amplMinVal/{minVal}", SetAmplMinVal)
+    {
+        ENDPOINT_ASYNC_INIT(SetAmplMinVal);
+
+        Action act() override
+        {
+            auto minValStr = request->getPathVariable("minVal");
+
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            double minVal = std::stod(minValStr->c_str());
+            controller->api->amplSettings.ui_minVal = minVal;
+
+            double value = controller->api->amplSettings.ui_minVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
     ENDPOINT_INFO(GetDepthMaxVal)
     {
         info->summary = "Get Max Value for Image Processing";
@@ -208,6 +291,30 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             }
 
             double value = controller->api->depthSettings.maxVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
+    ENDPOINT_INFO(GetAmplMaxVal)
+    {
+        info->summary = "Get Max Value for Image Processing";
+        info->description = "Allows setting a custom max value for processing the frame image.";
+        info->addResponse<Int32>(Status::CODE_200, "application/json");
+    }
+
+    ENDPOINT_ASYNC("GET", "/frame/amplMaxVal", GetAmplMaxVal)
+    {
+        ENDPOINT_ASYNC_INIT(GetAmplMaxVal)
+
+        Action act() override
+        {
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+
+            double value = controller->api->amplSettings.maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
@@ -238,6 +345,36 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             controller->api->depthSettings.ui_maxVal = maxVal;
 
             double value = controller->api->depthSettings.ui_maxVal;
+
+            return _return(controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value))));
+        }
+    };
+
+    ENDPOINT_INFO(SetAmplMaxVal)
+    {
+        info->summary = "Set Max Value for Image Processing";
+        info->description =
+            "Allows setting a custom max value for processing the frame image.";
+        info->pathParams.add<String>("maxVal").description =
+            "The custom max value for image processing.";
+    }
+
+    ENDPOINT_ASYNC("POST", "/frame/amplMaxVal/{maxVal}", SetAmplMaxVal)
+    {
+        ENDPOINT_ASYNC_INIT(SetAmplMaxVal);
+
+        Action act() override
+        {
+            auto maxValStr = request->getPathVariable("maxVal");
+
+            if (!controller->api) {
+                return _return(controller->createResponse(Status::CODE_404));
+            }
+            double maxVal = std::stod(maxValStr->c_str());
+            controller->api->amplSettings.ui_maxVal = maxVal;
+
+            double value = controller->api->amplSettings.ui_maxVal;
 
             return _return(controller->createResponse(
                 Status::CODE_200, oatpp::String(std::to_string(value))));
