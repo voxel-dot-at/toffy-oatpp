@@ -7,15 +7,15 @@
 #include "oatpp-swagger/Controller.hpp"
 #include "oatpp-swagger/AsyncController.hpp"
 
-#include "webapi/controller/staticContentsController.hpp"
-#include "webapi/controller/btaAdapterController.hpp"
-#include "webapi/controller/frameInfoController.hpp"
+#include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
+#include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
+#include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
-#include "filters/webAdapter.hpp"
-#include "webapi/swaggerComponent.hpp"
-#include "webapi/appComponent.hpp"
+#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/webapi/swaggerComponent.hpp"
+#include "toffy_oatpp/webapi/appComponent.hpp"
 
-#include "globals.hpp"
+#include "toffy_oatpp/globals.hpp"
 
 static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;

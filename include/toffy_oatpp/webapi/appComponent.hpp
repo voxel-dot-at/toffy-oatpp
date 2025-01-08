@@ -9,7 +9,7 @@
 
 #include "oatpp/macro/component.hpp"
 
-#include "webapi/swaggerComponent.hpp"
+#include "toffy_oatpp/webapi/swaggerComponent.hpp"
 
 /**
  *  Class which creates and holds Application components and registers components in oatpp::base::Environment

@@ -11,7 +11,7 @@
 #include "oatpp/json/ObjectMapper.hpp"
 #include "oatpp/base/Log.hpp"
 
-#include "webapi/dto/btaDto.hpp"
+#include "toffy_oatpp/webapi/dto/btaDto.hpp"
 
 #include "toffy/bta/bta.hpp"
 #include "toffy/bta/BtaWrapper.hpp"

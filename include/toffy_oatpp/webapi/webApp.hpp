@@ -2,6 +2,7 @@
 #define WEB_APP_H_
 
 #include "oatpp/web/server/api/ApiController.hpp"
+
 class SystemState;
 
 namespace toffy {

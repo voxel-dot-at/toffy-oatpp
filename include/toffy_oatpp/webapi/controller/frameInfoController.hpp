@@ -9,9 +9,9 @@
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
 
-#include "webapi/dto/frameDto.hpp"
+#include "toffy_oatpp/webapi/dto/frameDto.hpp"
 
-#include "shared/syncApi.hpp"
+#include "toffy_oatpp/shared/syncApi.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController)  /// <-- Begin Code-Gen
 

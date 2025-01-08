@@ -16,9 +16,9 @@
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-#include "shared/syncApi.hpp"
+#include "toffy_oatpp/shared/syncApi.hpp"
 
-#include "webapi/filters/webListener.hpp"
+#include "toffy_oatpp/webapi/filters/webListener.hpp"
 
 namespace toffy {
 namespace webapi {

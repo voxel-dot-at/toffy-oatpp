@@ -18,6 +18,12 @@ SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
 
 ################################################################################
+# Cmake module definitions
+################################################################################
+
+set(${PROJECT}_LIBRARIES ${PROJECT})
+
+################################################################################
 # Cmake modules
 ################################################################################
 
@@ -83,6 +89,59 @@ install(
 )
 
 ################################################################################
+# Install Stuff
+################################################################################
+
+#######################################
+# Config cmake
+#######################################
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake") #output
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake") #output
+
+#Targets name
+#   * ${INSTALL_CMAKE_DIR}/${targets_export_name}.cmake
+set(targets_export_name "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+install(
+    EXPORT "${targets_export_name}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${INSTALL_CMAKE_DIR}/"
+)
+
+# Set version required to config
+write_basic_package_version_file(
+    "${version_config}"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Configure '<PROJECT-NAME>Config.cmake'
+configure_package_config_file("cmake/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${INSTALL_CMAKE_DIR}"
+)
+
+# Instal config
+#   * <prefix>/lib/cmake/toffy/toffyConfig.cmake --> ${project_config}
+#   * <prefix>/lib/cmake/toffy/toffyConfigVersion.cmake --> ${version_config}
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${INSTALL_CMAKE_DIR}"
+)
+
+install(
+    EXPORT "${targets_export_name}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${INSTALL_CMAKE_DIR}/"
+)
+
+
+INSTALL( PROGRAMS ${binaries}
+    DESTINATION ${INSTALL_BIN_DIR}
+)
+
+################################################################################
 #
 ################################################################################
 
@@ -132,7 +191,7 @@ endif()
 find_package(Boost COMPONENTS log_setup log program_options system
         filesystem date_time serialization chrono thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-list(APPEND LIBS ${Boost_LIBRARIES} -lm)
+list(APPEND LIBS ${Boost_LIBRARIES})
 
 add_definitions(-DBOOST_ALL_DYN_LINK )
 
@@ -163,11 +222,33 @@ if(CMAKE_BUILD_TYPE MATCHES Release)
     add_definitions(-O2 -funroll-loops )
 endif()
 
-add_definitions(-Wall -ggdb -O0 )
-# add_definitions( -Weffc++ )
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    message("DEBUG BUILD")
+    add_definitions(-Wall -ggdb -O0 )
+    # add_definitions( -Weffc++ )
+endif()
+
 
 add_subdirectory(src)
 
 add_subdirectory(app)
 
 add_subdirectory(tests)
+
+install(DIRECTORY "include/" DESTINATION "include/")
+
+install(
+    TARGETS ${PROJECT_NAME}
+    EXPORT ${targets_export_name} 
+    LIBRARY
+        DESTINATION "${INSTALL_LIB_DIR}" COMPONENT library INCLUDES NAMELINK_SKIP
+    ARCHIVE
+        DESTINATION lib
+    RUNTIME
+        DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+    INCLUDES
+        DESTINATION "${INSTALL_INCLUDE_DIR}"
+    #We create only the include folder. Our headers have a specfic folder hierarchy
+    PUBLIC_HEADER
+        DESTINATION "${INSTALL_INCLUDE_DIR}" COMPONENT headers
+)

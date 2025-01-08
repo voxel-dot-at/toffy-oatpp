@@ -6,7 +6,7 @@
 #include "oatpp/macro/component.hpp"
 #include "oatpp/base/Log.hpp"
 
-#include "globals.hpp"
+#include "toffy_oatpp/globals.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController)  //<-- Begin Codegen
 

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "shared/syncApi.hpp"
+#include "toffy_oatpp/shared/syncApi.hpp"
 
 namespace toffy {
 

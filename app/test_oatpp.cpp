@@ -8,12 +8,12 @@
 #include <toffy/player.hpp>
 #include <toffy/bta/bta.hpp>
 
-#include "globals.hpp"
+#include "toffy_oatpp/globals.hpp"
 
-#include "filters/webAdapter.hpp"
-#include "webapi/webApp.hpp"
-#include "webapi/controller/btaAdapterController.hpp"
-#include "webapi/controller/frameInfoController.hpp"
+#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/webapi/webApp.hpp"
+#include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
+#include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
 using namespace std;
 using namespace toffy;

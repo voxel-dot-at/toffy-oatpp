@@ -9,11 +9,11 @@
 
 #include <toffy/filter_helpers.hpp>
 
-#include "filters/webAdapter.hpp"
-
 #include "oatpp/async/Executor.hpp"
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
+
+#include "toffy_oatpp/filters/webAdapter.hpp"
 
 using namespace toffy;
 using namespace toffy::webapi;
