@@ -63,7 +63,7 @@ class WebApi
             docEndpoints.append(ctrl->getEndpoints());
         }
 
-        if (theState.enableSwaggerUi) {
+        if (systemState->enableSwaggerUi) {
             router->addController(
                 oatpp::swagger::AsyncController::createShared(docEndpoints));
         }
@@ -137,12 +137,20 @@ static int theMainLoop()
     return 0;
 }
 
-void webAppStart(toffy::webapi::WebAdapter* webAdapter, SystemState* state)
+extern void webAppStart(SystemState& state)
 {
-    webAdap = webAdapter;
-    systemState = state;
+    webAdap = state.webAdap;
+    systemState = &state;
     runner = new std::thread(theMainLoop);
+
 }
+
+// void webAppStart(toffy::webapi::WebAdapter* webAdapter, SystemState* state)
+// {
+//     webAdap = webAdapter;
+//     systemState = state;
+//     runner = new std::thread(theMainLoop);
+// }
 
 void webAppStop()
 {

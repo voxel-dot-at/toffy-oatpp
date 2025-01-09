@@ -15,6 +15,7 @@
  */
 class StaticContentsController : public oatpp::web::server::api::ApiController
 {
+    SystemState& theState = getGlobalState();
    public:
     /**
    * Constructor with object mapper.

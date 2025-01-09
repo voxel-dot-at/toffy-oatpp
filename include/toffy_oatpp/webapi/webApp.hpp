@@ -17,6 +17,8 @@ extern void webAppInit();
 extern void registerController(std::shared_ptr<oatpp::web::server::api::ApiController> controller);
 
 
+extern void webAppStart(SystemState& state);
+
 extern void webAppStart(toffy::webapi::WebAdapter* webAdap,
                         SystemState* state = nullptr);
 extern void webAppStop();
