@@ -13,9 +13,9 @@
 using namespace toffy;
 using namespace std;
 
-static SystemState theState;
+static WebApiState theState;
 
-SystemState& getGlobalState()
+WebApiState& getGlobalState()
 { 
     return theState;
 }
@@ -30,7 +30,7 @@ static bool init_toffy_web()
 }
 
 /** perform controller-specific initialisation before registering to the web api & starting it */
-static void registerOatppControllers(SystemState &state, toffy::webapi::WebAdapter *webAdap)
+static void registerOatppControllers(WebApiState &state, toffy::webapi::WebAdapter *webAdap)
 {
     auto btaAdapCtrl = std::make_shared<BtaAdapterController>();
 
@@ -43,7 +43,7 @@ static void registerOatppControllers(SystemState &state, toffy::webapi::WebAdapt
 }
 
 
-void setupGlobalState(SystemState &state, bool withSwagger, Player *player)
+void setupGlobalState(WebApiState &state, bool withSwagger, Player *player)
 {
     state.player = player;
 

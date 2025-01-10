@@ -18,7 +18,7 @@
 static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;
 static toffy::webapi::WebAdapter* webAdap = nullptr;
-static SystemState* systemState = nullptr;
+static WebApiState* systemState = nullptr;
 
 using namespace toffy::webapi;
 

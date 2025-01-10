@@ -20,7 +20,7 @@
 static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;
 static toffy::webapi::WebAdapter* webAdap = nullptr;
-static SystemState* systemState = nullptr;
+static WebApiState* systemState = nullptr;
 
 using namespace toffy::webapi;
 
@@ -137,7 +137,7 @@ static int theMainLoop()
     return 0;
 }
 
-extern void webAppStart(SystemState& state)
+extern void webAppStart(WebApiState& state)
 {
     webAdap = state.webAdap;
     systemState = &state;
@@ -145,7 +145,7 @@ extern void webAppStart(SystemState& state)
 
 }
 
-// void webAppStart(toffy::webapi::WebAdapter* webAdapter, SystemState* state)
+// void webAppStart(toffy::webapi::WebAdapter* webAdapter, WebApiState* state)
 // {
 //     webAdap = webAdapter;
 //     systemState = state;
