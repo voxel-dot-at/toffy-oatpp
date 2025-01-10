@@ -13,10 +13,11 @@
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webAdapter.hpp"
 
+using namespace toffy_oatpp;
+using namespace toffy_oatpp::webapi;
 using namespace toffy;
-using namespace toffy::webapi;
 using namespace cv;
 using namespace std;
 

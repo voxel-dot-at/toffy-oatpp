@@ -11,7 +11,8 @@
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
-#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webAdapter.hpp"
+
 #include "toffy_oatpp/webapi/swaggerComponent.hpp"
 #include "toffy_oatpp/webapi/appComponent.hpp"
 
@@ -19,13 +20,12 @@
 
 static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;
-static toffy::webapi::WebAdapter* webAdap = nullptr;
-static WebApiState* systemState = nullptr;
+static toffy_oatpp::WebApiState* systemState = nullptr;
 
-using namespace toffy::webapi;
 
-namespace toffy {
+namespace toffy_oatpp {
 namespace webapi {
+
 
 /** helper class to enforce calling init() before initializing the AppComponent(!) */
 class Init
@@ -137,20 +137,12 @@ static int theMainLoop()
     return 0;
 }
 
-extern void webAppStart(WebApiState& state)
+extern void webAppStart(toffy_oatpp::WebApiState& state)
 {
-    webAdap = state.webAdap;
     systemState = &state;
     runner = new std::thread(theMainLoop);
 
 }
-
-// void webAppStart(toffy::webapi::WebAdapter* webAdapter, WebApiState* state)
-// {
-//     webAdap = webAdapter;
-//     systemState = state;
-//     runner = new std::thread(theMainLoop);
-// }
 
 void webAppStop()
 {

@@ -13,19 +13,22 @@
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webAdapter.hpp"
 
+using namespace toffy_oatpp;
+using namespace toffy_oatpp::webapi;
 using namespace toffy;
-using namespace toffy::webapi;
 using namespace cv;
 using namespace std;
 
 static const bool doVisu = false;
+namespace toffy_oatpp {
+namespace webapi {
 
-toffy::Filter* toffy::webapi::CreateWebAdapter(void)
-{
-    return new WebAdapter();
+toffy::Filter* CreateWebAdapter(void) { return new WebAdapter(); }
+
 }
+}  // namespace toffy_oatpp
 
 std::size_t WebAdapter::_filter_counter = 1;
 const std::string WebAdapter::id_name = "webAdapter";

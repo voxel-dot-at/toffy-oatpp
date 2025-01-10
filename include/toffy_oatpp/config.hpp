@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace toffy {
+namespace toffy_oatpp {
 namespace webapi {
 
 /** collection of configuration parameters for the web api.
@@ -16,4 +16,4 @@ class ConfigParams
 };
 
 }  // namespace webapi
-}  // namespace toffy
+}  // namespace toffy_oatpp

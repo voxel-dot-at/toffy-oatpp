@@ -10,14 +10,14 @@
 
 #include "toffy_oatpp/globals.hpp"
 
-#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webAdapter.hpp"
 #include "toffy_oatpp/webapi/webApp.hpp"
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
 using namespace std;
-using namespace toffy;
-using namespace toffy::webapi;
+using namespace toffy_oatpp;
+using namespace toffy_oatpp::webapi;
 
 /**
  *  main

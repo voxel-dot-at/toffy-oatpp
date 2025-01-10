@@ -3,7 +3,7 @@
 #include <string>
 
 #include "toffy_oatpp/shared/syncApi.hpp"
-#include "toffy_oatpp/filters/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webAdapter.hpp"
 
 namespace toffy {
 
@@ -16,6 +16,7 @@ class Bta;
 }
 }  // namespace toffy
 
+namespace toffy_oatpp {
 /**
  * @brief holds main program state...
  *
@@ -34,7 +35,8 @@ class WebApiState
 
     toffy::Player *player = nullptr;
     toffy::capturers::Bta *bta = nullptr;
-    toffy::webapi::WebAdapter *webAdap = nullptr;
+
+    toffy_oatpp::webapi::WebAdapter *webAdap = nullptr;
 
     /// @brief the synchronisation API for syncing OpenCV threads against Oat++
     SyncApi api;
@@ -43,9 +45,12 @@ class WebApiState
 /** set up the global state object, set an existing toffy player object 
  * and register a callback filter in the filterbank for syncing with the frontend.
  */
-extern void setupGlobalState(WebApiState &state, bool withSwagger, toffy::Player *player);
+extern void setupGlobalState(WebApiState &state, bool withSwagger,
+                             toffy::Player *player);
 
 /// @brief global application state; to be defined in the main application
 // extern WebApiState theState;
 
-extern WebApiState& getGlobalState();
+extern WebApiState &getGlobalState();
+
+}  // namespace toffy_oatpp

@@ -14,8 +14,7 @@
 
 #include "toffy/filter.hpp"
 
-namespace toffy {
-namespace oatpp {
+namespace toffy_oatpp {
 
 /** data listener super class; implements thread sync artefacts */
 class WebListener
@@ -104,6 +103,4 @@ class BtaAdapter : public Filter
 
 extern toffy::Filter* CreateWebAdapter(void);
 
-}  // namespace oatpp
-}  // namespace toffy
-
+}  // namespace toffy_oatpp

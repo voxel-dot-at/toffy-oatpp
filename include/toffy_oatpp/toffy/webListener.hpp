@@ -20,7 +20,7 @@
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-namespace toffy {
+namespace toffy_oatpp {
 namespace webapi {
 
 /** data listener super class; implements thread sync artefacts */
@@ -54,7 +54,7 @@ class WebListener : public oatpp::async::Coroutine<WebListener>
     Action waitForNextFrame();
 
     // notify semaphore
-    void haveWork(const Frame& in);
+    void haveWork(const toffy::Frame& in);
 
     bool valid;
 
@@ -75,7 +75,7 @@ class WebListener : public oatpp::async::Coroutine<WebListener>
     // isWaiting is set to true when a web requeset is pending; do work only if this is true.
     bool isWaiting = false;
     // do something with the frame data
-    virtual bool process(const Frame& in) = 0;
+    virtual bool process(const toffy::Frame& in) = 0;
 };
 
 class FrameInfoListener : public WebListener
@@ -84,12 +84,12 @@ class FrameInfoListener : public WebListener
     FrameInfoListener(const std::string& name = "frame") : WebListener(name) { isWaiting=true; }
 
     // std::vector<std::string> keys;
-    std::vector<Frame::SlotInfo> slots;
+    std::vector<toffy::Frame::SlotInfo> slots;
     int fc;
     float ledTemp, mainTemp;
 
    protected:
-    virtual bool process(const Frame& in);
+    virtual bool process(const toffy::Frame& in);
 };
 
 class ImgListener : public WebListener
@@ -100,7 +100,7 @@ class ImgListener : public WebListener
     boost::shared_ptr<std::string> strVal;
 
    protected:
-    virtual bool process(const Frame& in);
+    virtual bool process(const toffy::Frame& in);
 };
 
 class NumberListener : public WebListener
@@ -111,7 +111,7 @@ class NumberListener : public WebListener
     long numVal;
 
    protected:
-    virtual bool process(const Frame& in);
+    virtual bool process(const toffy::Frame& in);
 };
 
 }  // namespace webapi

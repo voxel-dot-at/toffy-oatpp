@@ -18,18 +18,18 @@
 
 #include "toffy_oatpp/shared/syncApi.hpp"
 
-#include "toffy_oatpp/webapi/filters/webListener.hpp"
+#include "toffy_oatpp/toffy/webListener.hpp"
 
-namespace toffy {
+namespace toffy_oatpp {
 namespace webapi {
 
 struct Resource
 {
     v_int64 counter;
-    Frame* frame;
+    toffy::Frame* frame;
 };
 
-class WebAdapter : public Filter
+class WebAdapter : public toffy::Filter
 {
     static const std::string id_name;  ///< Filter identifier
 
@@ -58,10 +58,10 @@ class WebAdapter : public Filter
 
     virtual void updateConfig(const boost::property_tree::ptree& pt);
 
-    virtual bool filter(const Frame& in, Frame& out);
+    virtual bool filter(const toffy::Frame& in, toffy::Frame& out);
 
     // old stuff, goes away
-    virtual bool filterOld(const Frame& in, Frame& out);
+    virtual bool filterOld(const toffy::Frame& in, toffy::Frame& out);
 
     // registers from an extrnal thread, will be released via newFrameSema:
     // oatpp::async::Action fetchNextFrame(WebListener* weli);

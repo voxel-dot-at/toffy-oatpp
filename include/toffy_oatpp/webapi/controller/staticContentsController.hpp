@@ -15,7 +15,8 @@
  */
 class StaticContentsController : public oatpp::web::server::api::ApiController
 {
-    WebApiState& theState = getGlobalState();
+    toffy_oatpp::WebApiState& theState = toffy_oatpp::getGlobalState();
+
    public:
     /**
    * Constructor with object mapper.
@@ -72,7 +73,7 @@ class StaticContentsController : public oatpp::web::server::api::ApiController
                 path += "index.html";
             }
             // TODO: check jail escape sequences.
-            
+
             // We will check the file if exist and send the index.html in case of not
             OATPP_LOGd("loading {}", ("webapi/" + path));
             auto file =

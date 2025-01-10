@@ -4,8 +4,8 @@
 add_library(toffy_oatpp SHARED
     globals.cpp
     webapi/controllers/btaAdapterController.cpp
-    filters/webAdapter.cpp
-    filters/webListener.cpp
+    toffy/webAdapter.cpp
+    toffy/webListener.cpp
     webapi/webApp.cpp
     )
 

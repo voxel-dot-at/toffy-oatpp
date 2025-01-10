@@ -3,12 +3,12 @@
 
 #include "oatpp/web/server/api/ApiController.hpp"
 
-class WebApiState;
+#include "toffy_oatpp/globals.hpp"
 
-namespace toffy {
+//class WebApiState;
+
+namespace toffy_oatpp {
 namespace webapi {
-
-class WebAdapter;
 
 // call this first...
 extern void webAppInit(); 
@@ -19,8 +19,6 @@ extern void registerController(std::shared_ptr<oatpp::web::server::api::ApiContr
 
 extern void webAppStart(WebApiState& state);
 
-extern void webAppStart(toffy::webapi::WebAdapter* webAdap,
-                        WebApiState* state = nullptr);
 extern void webAppStop();
 
 }  // namespace oatpp
