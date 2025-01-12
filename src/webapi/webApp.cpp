@@ -22,6 +22,7 @@ static oatpp::network::Server* theServer = nullptr;
 static std::thread* runner = nullptr;
 static toffy_oatpp::WebApiState* systemState = nullptr;
 
+using namespace std;
 
 namespace toffy_oatpp {
 namespace webapi {
@@ -137,14 +138,15 @@ static int theMainLoop()
     return 0;
 }
 
-extern void webAppStart(toffy_oatpp::WebApiState& state)
+extern void webApiStart(toffy_oatpp::WebApiState& state)
 {
+    cout << "TOFFY_OATPP::WEBAPPSTART" << endl;
     systemState = &state;
     runner = new std::thread(theMainLoop);
 
 }
 
-void webAppStop()
+void webApiStop()
 {
     if (theServer) {
         theServer->stop();

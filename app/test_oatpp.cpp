@@ -55,7 +55,7 @@ int main(int argc, const char *argv[])
 
     setupGlobalState(getGlobalState(), enableSwaggerUi, player);
 
-    webAppStart(getGlobalState());
+    webApiStart(getGlobalState());
 
     // END WEB FRONTEND
 
@@ -72,7 +72,7 @@ int main(int argc, const char *argv[])
     } while (keepRunning);
 
     cout << "stopping" << endl;
-    webAppStop();
+    webApiStop();
     cout << "done" << endl;
 
     return 0;

@@ -11,15 +11,15 @@ namespace toffy_oatpp {
 namespace webapi {
 
 // call this first...
-extern void webAppInit(); 
+extern void webApiInit(); 
 
 
 extern void registerController(std::shared_ptr<oatpp::web::server::api::ApiController> controller);
 
 
-extern void webAppStart(WebApiState& state);
+extern void webApiStart(WebApiState& state);
 
-extern void webAppStop();
+extern void webApiStop();
 
 }  // namespace oatpp
 }  // namespace toffy
