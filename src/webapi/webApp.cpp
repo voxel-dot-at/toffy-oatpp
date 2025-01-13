@@ -27,7 +27,6 @@ using namespace std;
 namespace toffy_oatpp {
 namespace webapi {
 
-
 /** helper class to enforce calling init() before initializing the AppComponent(!) */
 class Init
 {
@@ -90,20 +89,18 @@ class WebApi
         theServer = &server;
 
         /* Print info about server port */
-        OATPP_LOGi("WEBIF", "Server running on port {}",
+        OATPP_LOGi("WEBAPI", "Server running on port {}",
                    connectionProvider->getProperty("port").toString());
 
         /* Run server */
         server.run();
 
-        OATPP_LOGi("WEBIF", "Server stopped on port {}",
+        OATPP_LOGi("WEBAPI", "Server stopped on port {}",
                    connectionProvider->getProperty("port").toString());
     }
 };
 
-WebApi api;
-
-void webAppInit() {}
+static WebApi api;
 
 void registerController(
     std::shared_ptr<oatpp::web::server::api::ApiController> controller)
@@ -113,13 +110,20 @@ void registerController(
 
 static void addInternalControllers()
 {
+    if (systemState->bta) {
+        OATPP_LOGd("WEBAPI", "registering BTA controller for {}", systemState->bta->name());
+
+        auto bac = std::make_shared<BtaAdapterController>();
+        bac->registerBta(systemState->bta);
+        registerController(bac);
+    }
     //    registerController(std::make_shared<WebAdapterController>());
 }
 
 /**
  *  main
  */
-static int theMainLoop()
+static int webApiRunner()
 {
     addInternalControllers();
 
@@ -138,12 +142,11 @@ static int theMainLoop()
     return 0;
 }
 
-extern void webApiStart(toffy_oatpp::WebApiState& state)
+void webApiStart(toffy_oatpp::WebApiState& state)
 {
     cout << "TOFFY_OATPP::WEBAPPSTART" << endl;
     systemState = &state;
-    runner = new std::thread(theMainLoop);
-
+    runner = new std::thread(webApiRunner);
 }
 
 void webApiStop()
@@ -159,4 +162,4 @@ void webApiStop()
 }
 
 }  // namespace webapi
-}  // namespace toffy
+}  // namespace toffy_oatpp

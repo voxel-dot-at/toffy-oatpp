@@ -22,7 +22,7 @@ using namespace toffy_oatpp::webapi;
 /**
  *  main
  */
-int main(int argc, const char *argv[])
+int main(int argc, const char* argv[])
 {
     cout << "starting" << endl;
     std::string confFile = "xml/p230_depth_ampl.xml";
@@ -42,16 +42,13 @@ int main(int argc, const char *argv[])
         cout << "# cores detected " << processor_count << endl;
     }
 
-
-    toffy::Player *player;
+    toffy::Player* player;
     player = new toffy::Player(boost::log::trivial::debug, false);
 
     player->loadConfig(confFile);
 
     // WEB FRONTEND:
-
-    bool enableSwaggerUi =
-        getenv("WEBAPI") ? getenv("WEBAPI")[0] == '1' : true;
+    bool enableSwaggerUi = getenv("WEBAPI") ? getenv("WEBAPI")[0] == '1' : true;
 
     setupGlobalState(getGlobalState(), enableSwaggerUi, player);
 

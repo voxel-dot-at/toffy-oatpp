@@ -42,11 +42,12 @@ include_directories(${@PROJECT_NAME@_INCLUDE_DIRS})
 
 # TODO Provide the libs directory anyway, it may be needed in some cases.
 #SET(@PROJECT_NAME@_LIB_DIR @PACKAGE_INSTALL_DIR@)
-#LINK_DIRECTORIES(${@PROJECT_NAME@_LIB_DIR})
+LINK_DIRECTORIES(${@PROJECT_NAME@_LIB_DIR} ${oatpp_LIBRARIES_DIRS} ${oatpp-swagger_LIBRARIES_DIRS})
+
 
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET @PROJECT_NAME@ AND NOT @PROJECT_NAME@_BINARY_DIR)
-  # include("${@PROJECT_NAME@_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake")
+  include("${@PROJECT_NAME@_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake")
 endif()
 
 # Some additional settings are required if project is built as static libs

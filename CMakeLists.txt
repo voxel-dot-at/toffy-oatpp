@@ -201,6 +201,8 @@ find_package(oatpp          1.4.0 REQUIRED)
 find_package(oatpp-swagger  1.4.0 REQUIRED)
 
 include_directories("${oatpp-swagger_INCLUDE_DIRS}" ${oatpp_INCLUDE_DIRS})
+link_directories(${oatpp_LIBRARIES_DIRS})
+link_directories(${oatpp-swagger_LIBRARIES_DIRS})
 
 list(APPEND LIBS oatpp::oatpp  oatpp::oatpp-test oatpp::oatpp-swagger)
 message("OAT INC " ${oatpp_INCLUDE_DIRS})
