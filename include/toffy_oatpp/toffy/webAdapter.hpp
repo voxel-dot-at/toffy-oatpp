@@ -72,7 +72,7 @@ class WebAdapter : public toffy::Filter
     static size_t _filter_counter;
     std::vector<WebListener*> singleShots;
 
-    std::string* compressMat2Jpeg(const cv::Mat& mat);
+    std::shared_ptr<std::string> compressMat2Jpeg(const cv::Mat& mat);
 };
 
 extern toffy::Filter* CreateWebAdapter(void);

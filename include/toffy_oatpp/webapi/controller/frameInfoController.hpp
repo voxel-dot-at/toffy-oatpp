@@ -1,6 +1,6 @@
 #pragma once
 
-#include <regex>
+#include <string>
 
 #include "oatpp/web/protocol/http/outgoing/StreamingBody.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
@@ -18,6 +18,8 @@
 class FrameInfoReadCallback;
 class FrameMetaReadCallback;
 class FrameJpegReadCallback;
+
+static bool debugSync = false;
 
 class FrameInfoController : public oatpp::web::server::api::ApiController
 {
@@ -442,10 +444,10 @@ class FrameInfoReadCallback : public oatpp::data::stream::ReadCallback
             // limits to 50fps; better would be to compute expected arrival time by storing framerate&lastTs
             action = oatpp::async::Action::createWaitRepeatAction(
                 20 * 1000 + oatpp::Environment::getMicroTickCount());
-            OATPP_LOGd("CAMH", "tick");
+            if (debugSync) OATPP_LOGd("CAMH", "tick");
             return 0;
         }
-        OATPP_LOGd("CAMH", "ticked {} dlen={}", api.fc, len);
+        if (debugSync) OATPP_LOGd("CAMH", "ticked {} dlen={}", api.fc, len);
         if (len) {
             // second iteration with new contents - tell the body-builder we are done:
             action = oatpp::async::Action::createActionByType(
@@ -485,7 +487,7 @@ class FrameMetaReadCallback : public oatpp::data::stream::ReadCallback
     oatpp::v_io_size read(void* buffer, v_buff_size count,
                           oatpp::async::Action& action) override
     {
-        OATPP_LOGd("CAMH", "ticked {} dlen={}", api.fc, len);
+        if (debugSync) OATPP_LOGd("CAMM", "ticked {} dlen={}", api.fc, len);
         if (len) {
             // second iteration with new contents - tell the body-builder we are done:
             action = oatpp::async::Action::createActionByType(
@@ -538,71 +540,65 @@ class FrameJpegReadCallback : public oatpp::data::stream::ReadCallback
     {
     }
 
-    char* ptr = nullptr;
+    std::shared_ptr<std::string> shared;
+    const char* ptr = nullptr;
     int size = -1;
     oatpp::v_io_size read(void* buffer, v_buff_size count,
                           oatpp::async::Action& action) override
     {
         // timer strategy adapted from oatpp/test/oatpp/web/app/ControllerAsync.hpp
-        // check if the frame counter has changed
+
+        // check if the frame counter has changed, register interest
         if (api.fc == old) {
+            // enable compressor
+            if (path == api.depthSlotName) { 
+                api.wantDepth = true;
+            } else if (path == api.amplSlotName) {
+                api.wantAmpl = true;
+            }
+
             // limits to 50fps; better would be to compute expected arrival time by storing framerate&lastTs
             action = oatpp::async::Action::createWaitRepeatAction(
                 20 * 1000 + oatpp::Environment::getMicroTickCount());
-            OATPP_LOGd("CAMH", "tick");
+            if (debugSync) OATPP_LOGd("CAMJ", "{} tick", path);
             return 0;
         }
-
+        // new framecounter - first iteration: get the data to send:
         if (ptr == nullptr) {
-            const std::string* ss = nullptr;
-
-            if (path == "depth") {
-                ss = api.zJpeg;
-            } else if (path == "ampl") {
-                ss = api.yJpeg;
+            if (path == api.depthSlotName) {
+                shared = api.depthJpeg;
+                ptr = shared->c_str();
+            } else if (path == api.amplSlotName) {
+                shared = api.amplJpeg;
+                ptr = shared->c_str();
             } else {
-                std::cout << "Invalid jpeg path" << std::endl;
+                OATPP_LOGw("CAMJ", "Invalid jpeg path: {}", path);
                 return 0;
             }
-
-            if (ss != nullptr) {
-                size = ss->size();
-                ptr = const_cast<char*>(ss->c_str());
+            if (ptr != nullptr) {
+                size = shared->size();
+            } else {
+                OATPP_LOGw("CAMJ", "NO DATA for {}", path);
+                return 0;
             }
         }
-
-        if (size > count) {
+        // we have data, let's send it:
+        if (size > count) { // send chunks
             memcpy(buffer, ptr, count);
             ptr = ptr + count;
             size -= count;
             return count;
-        } else if (size > 0) {
-            memcpy(buffer, ptr, count);
-            ptr = ptr + count;
-            size -= count;
-            return count;
+        } else if (size > 0) { // last chunk
+            memcpy(buffer, ptr, size);
+            ptr = ptr + size;
+            size -= size;
+            return size;
         } else {
+            shared.reset();
             action = oatpp::async::Action::createActionByType(
                 oatpp::async::Action::TYPE_NONE);
             return 0;
         }
-
-        OATPP_LOGd("CAMH", "ticked {} dlen={}", api.fc, len);
-        if (len) {
-            // second iteration with new contents - tell the body-builder we are done:
-            action = oatpp::async::Action::createActionByType(
-                oatpp::async::Action::TYPE_NONE);
-            return 0;
-        }
-        // first iteration with new contents - new data available, let's prepare an answer
-
-        const std::string& ss = *api.zJpeg;
-        len = ss.size();
-
-        OATPP_LOGd("CAMH", "ticked {} dlen={} count={}", api.fc, len, count);
-
-        memcpy(buffer, ss.c_str(), len + 1);
-        return len;
     }
 };
 

@@ -32,9 +32,18 @@ class SyncApi
     // anything else to be shared goes below here...
     int exposure = 123;
 
+    // a pointer to the current frame for querying
     const toffy::Frame* frame = nullptr;
-    std::string* zJpeg = nullptr;
-    std::string* yJpeg = nullptr;
+
+    // image compression - todo: refactor the following to something more flexible.
+
+    bool wantDepth = false;
+    bool wantAmpl = false;
+    std::string depthSlotName = "depth";
+    std::string amplSlotName = "ampl";
+    
+    std::shared_ptr<std::string> depthJpeg = nullptr;
+    std::shared_ptr<std::string> amplJpeg = nullptr;
 
     MinMaxSettings depthSettings;
     MinMaxSettings amplSettings;

@@ -27,7 +27,7 @@ namespace webapi {
 
 toffy::Filter* CreateWebAdapter(void) { return new WebAdapter(); }
 
-}
+}  // namespace webapi
 }  // namespace toffy_oatpp
 
 std::size_t WebAdapter::_filter_counter = 1;
@@ -74,10 +74,8 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         api->mainTemp = mainTemp;
         api->frame = &in;
 
-        cout << "WEBADAP " << api->fc << endl;
-
-        if (in.hasKey("depth")) {
-            matPtr z = in.optMatPtr("depth", 0);
+        if (api->wantDepth && in.hasKey(api->depthSlotName)) {
+            matPtr m = in.optMatPtr(api->depthSlotName, 0);
 
             double ui_minVal = api->depthSettings.ui_minVal;
             double ui_maxVal = api->depthSettings.ui_maxVal;
@@ -89,7 +87,7 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
                 alpha = 255.0 / (ui_maxVal - ui_minVal);
                 beta = -ui_minVal * 255.0 / (ui_maxVal - ui_minVal);
             } else {
-                cv::minMaxLoc(*z, &minVal, &maxVal);
+                cv::minMaxLoc(*m, &minVal, &maxVal);
 
                 api->depthSettings.maxVal = maxVal;
                 api->depthSettings.minVal = minVal;
@@ -99,19 +97,18 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             }
 
             cv::Mat scaledDepth;
-            (*z).convertTo(scaledDepth, CV_8U, alpha, beta);
+            m->convertTo(scaledDepth, CV_8U, alpha, beta);
 
             cv::Mat coloredDepth;
             cv::applyColorMap(scaledDepth, coloredDepth, cv::COLORMAP_JET);
 
-            std::string* jpeg = compressMat2Jpeg(coloredDepth);
-            api->zJpeg = jpeg;
-        } else {
-            cout << "NO depth" << endl;
+            auto jpeg = compressMat2Jpeg(coloredDepth);
+            api->depthJpeg = jpeg;
+            api->wantDepth = false;
         }
 
-        if (in.hasKey("ampl")) {
-            matPtr z = in.optMatPtr("ampl", 0);
+        if (api->wantAmpl && in.hasKey(api->amplSlotName)) {
+            matPtr m = in.optMatPtr(api->amplSlotName, 0);
 
             double ui_minVal = api->amplSettings.ui_minVal;
             double ui_maxVal = api->amplSettings.ui_maxVal;
@@ -123,7 +120,7 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
                 alpha = 255.0 / (ui_maxVal - ui_minVal);
                 beta = -ui_minVal * 255.0 / (ui_maxVal - ui_minVal);
             } else {
-                cv::minMaxLoc(*z, &minVal, &maxVal);
+                cv::minMaxLoc(*m, &minVal, &maxVal);
 
                 api->amplSettings.maxVal = maxVal;
                 api->amplSettings.minVal = minVal;
@@ -133,12 +130,11 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             }
 
             cv::Mat scaledDepth;
-            (*z).convertTo(scaledDepth, CV_8U, alpha, beta);
+            m->convertTo(scaledDepth, CV_8U, alpha, beta);
 
-            std::string* jpeg = compressMat2Jpeg(scaledDepth);
-            api->yJpeg = jpeg;
-        } else {
-            cout << "NO amplitude" << endl;
+            auto jpeg = compressMat2Jpeg(scaledDepth);
+            api->amplJpeg = jpeg;
+            api->wantAmpl = false;
         }
     }
     api->cv.notifyAll();
@@ -146,7 +142,7 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
     return true;
 }
 
-std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
+std::shared_ptr<std::string> WebAdapter::compressMat2Jpeg(const cv::Mat& img)
 {
     // imgencode params:
     std::vector<int> params;
@@ -161,7 +157,8 @@ std::string* WebAdapter::compressMat2Jpeg(const cv::Mat& img)
 
     // constructor from buffer: Copies the first len characters from the array
     // of characters pointed by s
-    std::string* str = new string(s, len);
+    // std::string* str = new string(s, len);
+    auto str = make_shared<string>(s, len);
     return str;
 }
 
