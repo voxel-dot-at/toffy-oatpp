@@ -1,10 +1,10 @@
 #ifndef WEB_CONTROLLER_HPP
 #define WEB_CONTROLLER_HPP
 
-#include "oatpp/web/server/api/ApiController.hpp"
+#include "oatpp/base/Log.hpp"
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
-#include "oatpp/base/Log.hpp"
+#include "oatpp/web/server/api/ApiController.hpp"
 
 #include "toffy_oatpp/globals.hpp"
 
@@ -15,8 +15,6 @@
  */
 class StaticContentsController : public oatpp::web::server::api::ApiController
 {
-    toffy_oatpp::WebApiState& theState = toffy_oatpp::getGlobalState();
-
    public:
     /**
    * Constructor with object mapper.
@@ -28,7 +26,7 @@ class StaticContentsController : public oatpp::web::server::api::ApiController
     {
     }
 
-    static std::string getContentType(const std::string& path)
+    static std::string getContentType(const std::string &path)
     {
         const size_t i = path.find_last_of(".");
         if (i != std::string::npos) {
@@ -45,37 +43,35 @@ class StaticContentsController : public oatpp::web::server::api::ApiController
             if (extension == "svg" || extension == "svgz")
                 return "image/svg+xml";
         }
-        return "";  // if the path has no "." or has unknow extension we can not find the correct mime as well.
+        return "text/plain"; // (in)sane fallback
     };
 
    public:
-    /*
-    ENDPOINT("GET", "/", root)
+    ENDPOINT_ASYNC("GET", "*", StaticContents)
     {
-        auto dto = TestDto::createShared();
-        dto->statusCode = 200;
-        dto->topic = "funky/topic";
-        dto->message = "Hello World!";
-        return createDtoResponse(Status::CODE_200, dto);
-    }
-    */
-    ENDPOINT("GET", "*", wildcard,
-             REQUEST(std::shared_ptr<IncomingRequest>, request))
-    {
+        ENDPOINT_ASYNC_INIT(StaticContents);
+
+        Action act() override
         {
+            toffy_oatpp::WebApiState &theState = toffy_oatpp::getGlobalState();
+
             std::string path = request->getPathTail();
-            // Load the home page in case of no path, it means calling root like: http://localhost/
+            // Load the home page in case of no path, it means calling root like:
+            // http://localhost/
             if (path.empty()) {
-                path =
-                    "index.html";  // This is my default home file, you can set your own home page as well.
+                path = "index.html";
             }
             if (path.at(path.size() - 1) == '/') {
                 path += "index.html";
             }
+            if (path.find('?') >= 0) {
+                path = path.substr(0, path.find('?'));
+            }
             // TODO: check jail escape sequences.
 
-            // We will check the file if exist and send the index.html in case of not
-            OATPP_LOGd("loading {}", ("webapi/" + path));
+            // We will check the file if exist and send the index.html in case of
+            // not
+            OATPP_LOGd("WEB", "GET {}", theState.webRoot + path);
             auto file =
                 oatpp::String::loadFromFile((theState.webRoot + path).c_str());
             // Send 404 not found in case of no file
@@ -86,12 +82,14 @@ class StaticContentsController : public oatpp::web::server::api::ApiController
             const std::string contentType = getContentType(path);
 
             // Creating the response
-            auto response = createResponse(Status::CODE_200, file);
+            auto response = controller->createResponse(Status::CODE_200, file);
             if (contentType
-                    .size())  // Add the content-type header only if we have a known mime
+                    .size())  // Add the content-type header only if we have a
+                              // known mime
                 response->putHeader(Header::CONTENT_TYPE, contentType);
-            return response;
-        };
+
+            return _return(response);
+        }
     };
 };
 

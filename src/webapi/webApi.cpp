@@ -10,6 +10,7 @@
 #include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
+#include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
 
 #include "toffy_oatpp/toffy/webAdapter.hpp"
 
