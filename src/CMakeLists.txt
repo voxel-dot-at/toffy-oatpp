@@ -6,7 +6,7 @@ add_library(toffy_oatpp SHARED
     webapi/controllers/btaAdapterController.cpp
     toffy/webAdapter.cpp
     toffy/webListener.cpp
-    webapi/webApp.cpp
+    webapi/webApi.cpp
     )
 
 target_link_libraries( toffy_oatpp PUBLIC    ${LIBS}  )
