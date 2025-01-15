@@ -551,9 +551,9 @@ class FrameJpegReadCallback : public oatpp::data::stream::ReadCallback
         // check if the frame counter has changed, register interest
         if (api.fc == old) {
             // enable compressor
-            if (path == api.depthSlotName) { 
+            if (path == "depth") { 
                 api.wantDepth = true;
-            } else if (path == api.amplSlotName) {
+            } else if (path == "ampl") {
                 api.wantAmpl = true;
             }
 
@@ -565,10 +565,10 @@ class FrameJpegReadCallback : public oatpp::data::stream::ReadCallback
         }
         // new framecounter - first iteration: get the data to send:
         if (ptr == nullptr) {
-            if (path == api.depthSlotName) {
+            if (path == "depth") {
                 shared = api.depthJpeg;
                 ptr = shared->c_str();
-            } else if (path == api.amplSlotName) {
+            } else if (path == "ampl") {
                 shared = api.amplJpeg;
                 ptr = shared->c_str();
             } else {
