@@ -589,12 +589,13 @@ class FrameJpegReadCallback : public oatpp::data::stream::ReadCallback
             size -= count;
             return count;
         } else if (size > 0) { // last chunk
+            int s = size;
             memcpy(buffer, ptr, size);
-            ptr = ptr + size;
-            size -= size;
-            return size;
-        } else {
+            size = 0;
+            return s;
+        } else { // end transfer
             shared.reset();
+            ptr = nullptr;
             action = oatpp::async::Action::createActionByType(
                 oatpp::async::Action::TYPE_NONE);
             return 0;
