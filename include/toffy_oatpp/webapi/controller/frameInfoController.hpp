@@ -57,7 +57,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->description = "Get the next frame counter, sync via timer";
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
-    ENDPOINT_ASYNC("GET", "/frame/info", GetFrameInfo)
+    ENDPOINT_ASYNC("GET", "/api/frame/info", GetFrameInfo)
     {
         ENDPOINT_ASYNC_INIT(GetFrameInfo);
 
@@ -86,7 +86,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->description = "Get the Frame Meta Info";
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
-    ENDPOINT_ASYNC("GET", "/frame/meta", GetFrameMeta)
+    ENDPOINT_ASYNC("GET", "/api/frame/meta", GetFrameMeta)
     {
         ENDPOINT_ASYNC_INIT(GetFrameMeta);
 
@@ -116,7 +116,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Object<MinMaxDto>>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/depthMinMaxVal", GetDepthMinMaxVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/depthMinMaxVal", GetDepthMinMaxVal)
     {
         ENDPOINT_ASYNC_INIT(GetDepthMinMaxVal)
 
@@ -144,7 +144,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Object<MinMaxDto>>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/amplMinMaxVal", GetAmplMinMaxVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/amplMinMaxVal", GetAmplMinMaxVal)
     {
         ENDPOINT_ASYNC_INIT(GetAmplMinMaxVal)
 
@@ -172,7 +172,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/depthMinVal", GetDepthMinVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/depthMinVal", GetDepthMinVal)
     {
         ENDPOINT_ASYNC_INIT(GetDepthMinVal)
 
@@ -196,7 +196,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
     
-    ENDPOINT_ASYNC("GET", "/frame/amplMinVal", GetAmplMinVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/amplMinVal", GetAmplMinVal)
     {
         ENDPOINT_ASYNC_INIT(GetAmplMinVal)
 
@@ -222,7 +222,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom min value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/depthMinVal/{minVal}", SetDepthMinVal)
+    ENDPOINT_ASYNC("POST", "/api/frame/depthMinVal/{minVal}", SetDepthMinVal)
     {
         ENDPOINT_ASYNC_INIT(SetDepthMinVal);
 
@@ -253,7 +253,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom min value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/amplMinVal/{minVal}", SetAmplMinVal)
+    ENDPOINT_ASYNC("POST", "/api/frame/amplMinVal/{minVal}", SetAmplMinVal)
     {
         ENDPOINT_ASYNC_INIT(SetAmplMinVal);
 
@@ -282,7 +282,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
 
-    ENDPOINT_ASYNC("GET", "/frame/depthMaxVal", GetDepthMaxVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/depthMaxVal", GetDepthMaxVal)
     {
         ENDPOINT_ASYNC_INIT(GetDepthMaxVal)
 
@@ -306,7 +306,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
         info->addResponse<Int32>(Status::CODE_200, "application/json");
     }
 
-    ENDPOINT_ASYNC("GET", "/frame/amplMaxVal", GetAmplMaxVal)
+    ENDPOINT_ASYNC("GET", "/api/frame/amplMaxVal", GetAmplMaxVal)
     {
         ENDPOINT_ASYNC_INIT(GetAmplMaxVal)
 
@@ -332,7 +332,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom max value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/depthMaxVal/{maxVal}", SetDepthMaxVal)
+    ENDPOINT_ASYNC("POST", "/api/frame/depthMaxVal/{maxVal}", SetDepthMaxVal)
     {
         ENDPOINT_ASYNC_INIT(SetDepthMaxVal);
 
@@ -362,7 +362,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "The custom max value for image processing.";
     }
 
-    ENDPOINT_ASYNC("POST", "/frame/amplMaxVal/{maxVal}", SetAmplMaxVal)
+    ENDPOINT_ASYNC("POST", "/api/frame/amplMaxVal/{maxVal}", SetAmplMaxVal)
     {
         ENDPOINT_ASYNC_INIT(SetAmplMaxVal);
 
@@ -391,7 +391,7 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             "To get `depth` or `ampl` image, type either";
     }
 
-    ENDPOINT_ASYNC("GET", "/frame/{path}", GetFrameDepth)
+    ENDPOINT_ASYNC("GET", "/api/frame/{path}", GetFrameDepth)
     {
         ENDPOINT_ASYNC_INIT(GetFrameDepth);
 
