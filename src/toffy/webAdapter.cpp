@@ -74,6 +74,16 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
         api->mainTemp = mainTemp;
         api->frame = &in;
 
+        auto iter = listeners.begin();
+        while (iter != listeners.end()) {
+            WebAdapterListener* l = *iter;
+
+            if (l->runMe) {
+                l->process(in, api);
+            }
+            iter++;
+        }
+
         if (api->wantDepth && in.hasKey(api->depthSlotName)) {
             matPtr m = in.optMatPtr(api->depthSlotName, 0);
 
@@ -160,46 +170,4 @@ std::shared_ptr<std::string> WebAdapter::compressMat2Jpeg(const cv::Mat& img)
     // std::string* str = new string(s, len);
     auto str = make_shared<string>(s, len);
     return str;
-}
-
-bool WebAdapter::filterOld(const Frame& in, Frame& out)
-{
-    // bool worked = this->lock.try_lock();
-    // if (!worked) {
-    //     cout << "WebAdapter::filter() FAILED TO LOCK " << worked << " " << listeners.size() << " single " << singleShots.size() << endl;
-    // }
-
-    this->fc = in.optUInt("fc", -1);
-
-    cout << "WebAdapter::filter() listeners..? " << listeners.size()
-         << " single " << singleShots.size() << " rc " << resource.counter
-         << endl;
-    {
-        std::lock_guard<oatpp::async::Lock> guard(lock);
-        // std::lock_guard<oatpp::async::Lock> guard(this->lock);
-        this->fc = in.optUInt("fc", -1);
-        this->resource.counter++;
-        this->resource.frame = &out;
-
-        for (auto iter = listeners.begin(); iter != listeners.end(); iter++) {
-            WebListener* weli = *iter;
-
-            weli->haveWork(in);
-        }
-
-        for (auto iter = singleShots.begin(); iter != singleShots.end();
-             iter++) {
-            (*iter)->haveWork(in);
-        }
-        singleShots.clear();
-    }
-    cout << "WebAdapter::filter() GO"
-         << " rc " << resource.counter << endl;
-    // this->lock.unlock();
-    theCv().notifyAll();
-
-    resource.counter = 0;
-    cout << "WebAdapter::filter() DONE"
-         << " rc " << resource.counter << endl;
-    return true;
 }

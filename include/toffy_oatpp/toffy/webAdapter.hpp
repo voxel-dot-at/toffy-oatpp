@@ -4,37 +4,42 @@
  * 
  */
 
-
 #include <condition_variable>
 #include <mutex>
 #include <vector>
 #include <string>
 #include <thread>
 
+#include "toffy/frame.hpp"
 #include "toffy/filter.hpp"
 
-#include "oatpp/async/Coroutine.hpp"
-#include "oatpp/async/ConditionVariable.hpp"
+// #include "oatpp/async/Coroutine.hpp"
+// #include "oatpp/async/ConditionVariable.hpp"
 
 #include "toffy_oatpp/shared/syncApi.hpp"
 
-#include "toffy_oatpp/toffy/webListener.hpp"
-
 namespace toffy_oatpp {
-namespace webapi {
 
-struct Resource
+class WebAdapterListener
 {
-    v_int64 counter;
-    toffy::Frame* frame;
+    std::string n;
+
+   public:
+    bool runMe;
+
+    WebAdapterListener(const std::string& name) : n(name) {}
+
+    const std::string& name() const { return n; }
+
+    // do something with the frame data
+    virtual bool process(const ::toffy::Frame& in, SyncApi* api) = 0;
 };
+
+namespace webapi {
 
 class WebAdapter : public toffy::Filter
 {
     static const std::string id_name;  ///< Filter identifier
-
-    oatpp::async::ConditionVariable cv;
-    oatpp::async::Lock lock;
 
     SyncApi* api = nullptr;
 
@@ -43,15 +48,11 @@ class WebAdapter : public toffy::Filter
 
     virtual ~WebAdapter() {}
 
-    void setApi(SyncApi* api) { this->api = api;}
+    void setApi(SyncApi* api) { this->api = api; }
 
     unsigned int fc = -1;
 
-    oatpp::async::Lock& theLock() { return lock; }
-    oatpp::async::ConditionVariable& theCv() { return cv; }
-    volatile Resource resource;
-
-    std::vector<WebListener*> listeners;
+    std::vector<WebAdapterListener*> listeners;
 
     // virtual int loadConfig(const boost::property_tree::ptree& pt);
     virtual boost::property_tree::ptree getConfig() const;
@@ -60,17 +61,8 @@ class WebAdapter : public toffy::Filter
 
     virtual bool filter(const toffy::Frame& in, toffy::Frame& out);
 
-    // old stuff, goes away
-    virtual bool filterOld(const toffy::Frame& in, toffy::Frame& out);
-
-    // registers from an extrnal thread, will be released via newFrameSema:
-    // oatpp::async::Action fetchNextFrame(WebListener* weli);
-
-    void singleShot(WebListener* wl) { singleShots.push_back(wl); }
-
    private:
     static size_t _filter_counter;
-    std::vector<WebListener*> singleShots;
 
     std::shared_ptr<std::string> compressMat2Jpeg(const cv::Mat& mat);
 };
@@ -78,4 +70,4 @@ class WebAdapter : public toffy::Filter
 extern toffy::Filter* CreateWebAdapter(void);
 
 }  // namespace webapi
-}  // namespace toffy
+}  // namespace toffy_oatpp

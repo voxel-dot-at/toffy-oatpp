@@ -13,7 +13,7 @@
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
-#include "toffy_oatpp/toffy/webAdapter.hpp"
+#include "toffy_oatpp/toffy/webListener.hpp"
 
 using namespace toffy_oatpp;
 using namespace toffy_oatpp::webapi;
@@ -23,54 +23,6 @@ using namespace std;
 
 static const bool doVisu = false;
 
-oatpp::async::Action WebListener::waitForWork()
-{
-    cout << "WAIT " << name() << endl;
-
-    // std::unique_lock lk(m);
-    isWaiting = true;
-
-    return newFrameSema
-        ->wait(m_lockGuard,
-               [this]() noexcept {
-                   isWaiting = false;
-                   cout << "WAITing4w " << name() << " " << valid << endl;
-                   return valid;
-               })
-        .next(finish());
-}
-
-oatpp::async::Action WebListener::waitForNextFrame()
-{
-    cout << "WebListener::waitForNextFrame " << name() << endl;
-    isWaiting = true;
-
-    return newFrameSema
-        ->wait(m_lockGuard,
-               [this]() noexcept {
-                   isWaiting = false;
-                   cout << "WAITing4n " << name() << " " << valid << endl;
-                   return valid;
-               })
-        .next(finish());
-}
-
-void WebListener::haveWork(const Frame& in)
-{
-    valid = false;
-    cout << "haveWork...? " << name() << " " << isWaiting << endl;
-    if (isWaiting) {
-        {
-            // std::lock_guard lk(m);
-            valid = process(in);
-        }
-        // manual unlocking is done before notifying, to avoid waking up
-        // the waiting thread only to block again (see notify_one for details)
-        // lk.unlock();
-
-        // workToDo.notify_one();
-    }
-}
 
 bool FrameInfoListener::process(const Frame& in)
 {

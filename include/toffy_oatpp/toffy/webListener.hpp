@@ -1,5 +1,4 @@
-#ifndef WEB_LISTENER_HPP
-#define WEB_LISTENER_HPP
+#pragma once
 
 /**
  * @brief find a colored box via hsv analysis
@@ -14,74 +13,24 @@
 #include <vector>
 #include <thread>
 
-#include "toffy/filter.hpp"
-
 #include "oatpp/async/Executor.hpp"
 #include "oatpp/async/Coroutine.hpp"
 #include "oatpp/async/ConditionVariable.hpp"
 
+#include "toffy_oatpp/toffy/webAdapter.hpp"
+
 namespace toffy_oatpp {
-namespace webapi {
+// namespace toffy {
 
-/** data listener super class; implements thread sync artefacts */
-class WebListener : public oatpp::async::Coroutine<WebListener>
-{
-    std::string n;
+// from WebAdapter, we have
+// class WebAdapterListener;
 
-   public:
-    WebListener(const std::string& name) : n(name) {}
-
-    Action act() override
-    {
-        return newFrameSema
-            ->wait(m_lockGuard, [this]() noexcept { return valid; })
-            .next(finish());
-    }
-
-    // Action onReady()
-    // {
-    //     return finish();
-    // }
-
-    const std::string& name() const { return n; }
-
-    std::vector<std::thread> threads;
-
-    // wait on semaphore
-    Action waitForWork();
-
-    // wait on semaphore
-    Action waitForNextFrame();
-
-    // notify semaphore
-    void haveWork(const toffy::Frame& in);
-
-    bool valid;
-
-    oatpp::async::LockGuard m_lockGuard;
-    oatpp::async::ConditionVariable* newFrameSema;  ///< defined in webadapter
-
-   protected:
-    std::mutex m;
-    // std::condition_variable workToDo;
-
-    // oatpp::async::LockGuard m_lockGuard;
-    oatpp::async::ConditionVariable workTodo;
-
-    // std::shared_ptr<Resource> m_resource;
-    // oatpp::async::LockGuard m_lockGuard;
-    // oatpp::async::ConditionVariable m_cv;
-
-    // isWaiting is set to true when a web requeset is pending; do work only if this is true.
-    bool isWaiting = false;
-    // do something with the frame data
-    virtual bool process(const toffy::Frame& in) = 0;
-};
-
-class FrameInfoListener : public WebListener
+class FrameInfoListener : public toffy_oatpp::WebAdapterListener
 {
    public:
-    FrameInfoListener(const std::string& name = "frame") : WebListener(name) { isWaiting=true; }
+    FrameInfoListener(const std::string& name = "frame")
+        : WebAdapterListener(name)
+    {}
 
     // std::vector<std::string> keys;
     std::vector<toffy::Frame::SlotInfo> slots;
@@ -92,10 +41,10 @@ class FrameInfoListener : public WebListener
     virtual bool process(const toffy::Frame& in);
 };
 
-class ImgListener : public WebListener
+class ImgListener : public WebAdapterListener
 {
    public:
-    ImgListener(const std::string& name) : WebListener(name) {}
+    ImgListener(const std::string& name) : WebAdapterListener(name) {}
 
     boost::shared_ptr<std::string> strVal;
 
@@ -103,10 +52,10 @@ class ImgListener : public WebListener
     virtual bool process(const toffy::Frame& in);
 };
 
-class NumberListener : public WebListener
+class NumberListener : public WebAdapterListener
 {
    public:
-    NumberListener(const std::string& name) : WebListener(name) {}
+    NumberListener(const std::string& name) : WebAdapterListener(name) {}
 
     long numVal;
 
@@ -114,7 +63,5 @@ class NumberListener : public WebListener
     virtual bool process(const toffy::Frame& in);
 };
 
-}  // namespace webapi
-}  // namespace toffy
-
-#endif
+// }  // namespace webapi
+}  // namespace toffy_oatpp
