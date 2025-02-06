@@ -6,7 +6,7 @@
 
 #include <toffy/frame.hpp>
 
-/// the global i to sync backend process and frontend api:
+/// the global api to sync backend process and frontend api:
 
 typedef struct {
 

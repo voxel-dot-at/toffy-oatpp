@@ -66,6 +66,7 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
     unsigned int fc = in.optUInt("fc", -1);
     float ledTemp = in.optFloat("lt", -1);
     float mainTemp = in.optFloat("mt", -1);
+    bool uiActive = in.optBool("uiActive", false);
 
     {
         std::lock_guard<oatpp::async::Lock> guard(api->lock);
@@ -146,6 +147,8 @@ bool WebAdapter::filter(const Frame& in, Frame& out)
             api->amplJpeg = jpeg;
             api->wantAmpl = false;
         }
+        uiActive = api->wantAmpl || api->wantDepth;
+        out.addData("uiActive", uiActive);
     }
     api->cv.notifyAll();
 
