@@ -77,7 +77,7 @@ class ImgListener : public WebListener
    public:
     ImgListener(const std::string& name) : WebListener(name) {}
 
-    boost::shared_ptr<std::string> strVal;
+    std::shared_ptr<std::string> strVal;
 
    protected:
     virtual bool process(const Frame& in);

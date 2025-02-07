@@ -46,7 +46,7 @@ class ImgListener : public WebAdapterListener
    public:
     ImgListener(const std::string& name) : WebAdapterListener(name) {}
 
-    boost::shared_ptr<std::string> strVal;
+    std::shared_ptr<std::string> strVal;
 
    protected:
     virtual bool process(const toffy::Frame& in);
