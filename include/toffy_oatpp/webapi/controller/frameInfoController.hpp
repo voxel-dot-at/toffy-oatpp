@@ -147,9 +147,12 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             dto->minVal = controller->api->depthSettings.minVal;
             dto->maxVal = controller->api->depthSettings.maxVal;
 
-            return _return(controller->createResponse(
+            auto response = controller->createResponse(
                 Status::CODE_200, controller->om->writeToString(dto)
-            ));
+            );
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -175,9 +178,12 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
             dto->minVal = controller->api->amplSettings.minVal;
             dto->maxVal = controller->api->amplSettings.maxVal;
 
-            return _return(controller->createResponse(
+            auto response = controller->createResponse(
                 Status::CODE_200, controller->om->writeToString(dto)
-            ));
+            );
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -200,8 +206,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->depthSettings.minVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -224,8 +233,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->amplSettings.minVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -255,8 +267,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->depthSettings.ui_minVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -286,8 +301,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->amplSettings.ui_minVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -310,8 +328,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->depthSettings.maxVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -334,8 +355,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->amplSettings.maxVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -364,8 +388,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->depthSettings.ui_maxVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 
@@ -394,8 +421,11 @@ class FrameInfoController : public oatpp::web::server::api::ApiController
 
             double value = controller->api->amplSettings.ui_maxVal;
 
-            return _return(controller->createResponse(
-                Status::CODE_200, oatpp::String(std::to_string(value))));
+            auto response = controller->createResponse(
+                Status::CODE_200, oatpp::String(std::to_string(value)));
+            response->putHeader("content-type", "application/json");
+
+            return _return(response);
         }
     };
 

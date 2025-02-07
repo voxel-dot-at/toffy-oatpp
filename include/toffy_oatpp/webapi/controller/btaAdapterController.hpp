@@ -163,6 +163,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             unsigned int value = s->getIntegrationTime();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+            response->putHeader("content-type", "application/json");
 
             return _return(response);
         }
@@ -189,6 +190,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             float value = s->getFrameRate();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+            response->putHeader("content-type", "application/json");
 
             return _return(response);
         }
@@ -234,7 +236,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             float value = s->getFrameRate();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
-
+            response->putHeader("content-type", "application/json");
+            
             return _return(response);
         }
     };
@@ -260,6 +263,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             unsigned int value = s->getModulationFrequency();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+            response->putHeader("content-type", "application/json");
+
             return _return(response);
         }
     };
@@ -304,6 +309,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             unsigned int value = s->getModulationFrequency();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+            response->putHeader("content-type", "application/json");
 
             return _return(response);
         }
@@ -330,6 +336,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             float value = s->getGlobalOffset();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+            response->putHeader("content-type", "application/json");
 
             return _return(response);
         }
@@ -375,6 +382,7 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
 
             float value = s->getGlobalOffset();
             auto response = self->createDtoResponse(Status::CODE_200, oatpp::Float32(value));
+            response->putHeader("content-type", "application/json");
 
             return _return(response);
         }
@@ -415,6 +423,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
                 unsigned int value = s->readRegister(reg);
 
                 auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+                response->putHeader("content-type", "application/json");
+
                 return _return(response);
 
             } catch (const std::exception& e) {
@@ -470,6 +480,8 @@ class BtaAdapterController : public oatpp::web::server::api::ApiController
                 unsigned int value = s->readRegister(reg);
 
                 auto response = self->createDtoResponse(Status::CODE_200, oatpp::Int32(value));
+                response->putHeader("content-type", "application/json");
+
                 return _return(response);
 
             } catch (const std::exception& e) {
