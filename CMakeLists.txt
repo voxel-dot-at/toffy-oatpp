@@ -182,7 +182,14 @@ endif()
 find_package(toffy 2.0 REQUIRED )
 if (toffy_FOUND)
     include_directories(${toffy_INCLUDE_DIRS})
-    add_definitions(${toffy__DEFINITIONS})
+    # toffy__DEFINITIONS (double underscore) expanded to nothing, so none of this ever
+    # reached the target. What it carries, from toffyConfig.cmake:
+    #   -DEIGEN_DONT_VECTORIZE -DEIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+    #   -DEIGEN_SUPPORT_STAGE=99 -DBOOST_ALL_DYN_LINK -DBOOST_ALL_NO_LIB
+    # The Eigen flags change object layout, so this was an ABI mismatch between
+    # libtoffy_oatpp.so and every other component in a process that links both it and
+    # libtoffy -- boxes applies them, toffy_oatpp did not.
+    add_definitions(${toffy_DEFINITIONS})
     list(APPEND LIBS ${toffy_LIBRARIES})
 endif()
 
@@ -215,7 +222,9 @@ add_definitions(
 
 ################################################################################
 
-list(APPEND DEFINITIONS -DEIGEN_DONT_VECTORIZE -DEIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT -DEIGEN_SUPPORT_STAGE=99)
+# (a `list(APPEND DEFINITIONS -DEIGEN_DONT_VECTORIZE …)` used to sit here: never passed
+#  to add_definitions, never read by anything. The same flags now arrive through
+#  ${toffy_DEFINITIONS}, which is the one place they should be set.)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/api ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
