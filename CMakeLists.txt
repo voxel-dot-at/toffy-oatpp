@@ -116,11 +116,9 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# Configure '<PROJECT-NAME>Config.cmake'
-configure_package_config_file("cmake/Config.cmake.in"
-    "${project_config}"
-    INSTALL_DESTINATION "${INSTALL_CMAKE_DIR}"
-)
+# '<PROJECT-NAME>Config.cmake' is generated further down, after the find_package
+# calls: the template records the dependency versions this library was built against,
+# and those variables do not exist yet at this point in the file.
 
 # Instal config
 #   * <prefix>/lib/cmake/toffy/toffyConfig.cmake --> ${project_config}
@@ -195,8 +193,12 @@ endif()
 
 
 # Boost
+# no `thread` component: nothing here uses boost::thread or boost::mutex -- the
+# concurrency is std::thread/std::condition_variable, and toffy dropped
+# <boost/thread.hpp> from its installed headers in P2-7. The component was only ever
+# pulling libboost_thread into the link line.
 find_package(Boost COMPONENTS log_setup log program_options system
-        filesystem date_time serialization chrono thread REQUIRED)
+        filesystem date_time serialization chrono REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBS ${Boost_LIBRARIES})
 
@@ -218,6 +220,16 @@ message("OAT INC " ${oatpp-swagger_INCLUDE_DIRS})
 add_definitions(
         ## define path to swagger-ui static resources folder
         -DOATPP_SWAGGER_RES_PATH="${oatpp-swagger_INCLUDE_DIRS}/../bin/oatpp-swagger/res"
+)
+
+# Now that the dependency versions are known, generate the package config from them.
+#   * toffy_oatpp's config used to declare no dependency at all, so every consumer had
+#     to repeat find_package(toffy <ver>) by hand -- and drift out of step with it.
+#   * the version recorded is the one this library was compiled against, which with
+#     toffy's full-version SOVERSION is the only version it can link to.
+configure_package_config_file("cmake/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${INSTALL_CMAKE_DIR}"
 )
 
 ################################################################################
