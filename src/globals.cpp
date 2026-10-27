@@ -85,13 +85,18 @@ void setupGlobalState(WebApiState &state, bool withSwagger,
     }
 
     // initialize oatpp controller objects:
-    // web api:::
-    toffy_oatpp::webapi::WebAdapter *webAdap = new toffy_oatpp::webapi::WebAdapter();
+    // web api::: the WebAdapter is a filter, and since toffy 2.0 (P2-5) the bank
+    // *owns* what it is handed: add() takes a FilterPtr, so the hand-over has to be
+    // visible here. make_shared rather than wrapping the raw new, because a wrap
+    // would put the bank's claim and this call site's claim on the same object with
+    // the same independence that made a filter in two banks get deleted twice.
+    auto webAdap = std::make_shared<toffy_oatpp::webapi::WebAdapter>();
     webAdap->setApi(&theState.api);
     player->filterBank()->add(webAdap);
 
-    // initialize web api linkage:
-    registerOatppControllers(theState, webAdap);
+    // initialize web api linkage: the controllers only borrow the adapter; the bank
+    // keeps it alive for the lifetime of the pipeline.
+    registerOatppControllers(theState, webAdap.get());
 }
 
 }  // namespace toffy_oatpp
