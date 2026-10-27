@@ -179,7 +179,7 @@ if (OpenCV_FOUND)
     message (STATUS "OpenCV_FOUND: " ${OpenCV_FOUND})
 endif()
 
-find_package(toffy 1.6 REQUIRED )
+find_package(toffy 2.0 REQUIRED )
 if (toffy_FOUND)
     include_directories(${toffy_INCLUDE_DIRS})
     add_definitions(${toffy__DEFINITIONS})
