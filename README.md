@@ -39,3 +39,26 @@ Follow these steps to build the `toffy-oatpp` API project:
 ### The API will now be running and accessible. You can view the Swagger API documentation by navigating to:
 
    http://localhost:8000/swagger/ui#/
+
+## Branches
+
+- **`main`** — the line everything builds against and pins to.
+- **`feature/toffy-upgrade`** — the toffy 2.0 upgrade: `find_package(toffy 2.0)`, `FilterBank::add(FilterPtr)`
+  ownership, the `${toffy_DEFINITIONS}` Eigen flags, transitive `find_dependency` in the installed
+  package, Boost `thread` dropped, four files that could not compile deleted. It lands on `main`,
+  and the first version tag is cut from `main` afterwards — never from the branch, because a
+  published tag is never moved.
+- **`next` — dropped 2026-10-28.** Fifteen commits of oatpp-socketio/websocket support, dynamic
+  swagger URLs and a `WebApi` pointer refactor, branched from `main` in February 2025 and silent
+  since `3a97d1b` ("count 1", 2025-04-25). It was never released, never consumed, and never
+  carried any of the toffy 2.0 work; keeping it alive cost a decision every time anyone asked
+  "what does `main` carry?" — which is the one question a version tag has to answer.
+
+  Nothing was deleted to drop it. The work is `3a97d1b` and its fourteen parents, archived as the
+  local tag `archive/next-2025-04-25` and in a `git bundle` beside the repository. To revive it:
+  branch from that tag and rebase onto current `main`, expecting three conflicts —
+  `CMakeLists.txt` (mechanical), `src/CMakeLists.txt` (the deleted `webListener.cpp`), and
+  `src/globals.cpp`, which is the interesting one: `state.webAdap` is a raw `WebAdapter*`, and
+  since the `FilterPtr` change the **bank owns that object**, so the revived code needs to know
+  who keeps it alive. The socket.io line also needs `oatpp-websocket` and `oatpp-socketio`
+  installed wherever it is built.
