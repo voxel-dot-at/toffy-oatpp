@@ -8,6 +8,26 @@ SET(@PROJECT_NAME@_VERSION_PATCH  @PROJECT_VERSION_PATCH@)
 
 @PACKAGE_INIT@
 
+# Snapshot the prefix before any dependency is looked up.
+#
+# PACKAGE_PREFIX_DIR is a plain variable in the *consumer's* scope, and every
+# installed package's config recomputes it from its own location. The
+# find_dependency() calls below therefore overwrite it: find_dependency(oatpp)
+# runs /usr/local/lib/cmake/oatpp-1.4.0/oatppConfig.cmake, which resets it to
+# /usr/local, and every path this file computes afterwards points into the oatpp
+# prefix instead of this package's.
+#
+# Measured 2026-10-31 by building `boxes` against a staged install:
+#   toffy_oatpp_INCLUDE_DIRS = /usr/local/include/
+#   toffy_oatpp_LIBRARIES    = /usr/local/lib/libtoffy_oatpp.so   (not there)
+# It configures — set_and_check only asks whether the directory exists, and
+# /usr/local/include does — and fails at link. Two reasons it stayed hidden: the
+# CI consumer cell builds toffy_oatpp from source against a staged toffy and
+# never installs it, so Config.cmake.in is not on that path at all; and an
+# install into /usr/local, which is where oatpp lives, makes the wrong prefix
+# the right one by accident. Any staged or relocated install gets it.
+set(TOFFY_OATPP_PACKAGE_PREFIX "${PACKAGE_PREFIX_DIR}")
+
 include(CMakeFindDependencyMacro)
 
 ################################################################################
@@ -47,7 +67,7 @@ message(STATUS "Found @PROJECT_NAME@ ${@PROJECT_NAME@_VERSION}: BTA endpoints ${
 get_filename_component(@PROJECT_NAME@_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 #if (MSVC)
 #set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include/")
-set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include/")
+set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "${TOFFY_OATPP_PACKAGE_PREFIX}/include/")
 #else()
 #set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/@INSTALL_CMAKE_DIR@")
 #set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/@INSTALL_CMAKE_DIR@")
@@ -85,13 +105,13 @@ if (MSVC)
 
     #set(@PROJECT_NAME@_LIBRARIES_RELEASE "@CMAKE_INSTALL_PREFIX@/@INSTALL_LIB_DIR@/@PROJECT_NAME@.lib")
     #set(@PROJECT_NAME@_LIBRARIES_DEBUG "@CMAKE_INSTALL_PREFIX@/@INSTALL_LIB_DIR@/@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@.lib")
-    set(@PROJECT_NAME@_LIBRARIES_RELEASE "${PACKAGE_PREFIX_DIR}/@INSTALL_LIB_DIR@/@PROJECT_NAME@.lib")
-    set(@PROJECT_NAME@_LIBRARIES_DEBUG "${PACKAGE_PREFIX_DIR}/@INSTALL_LIB_DIR@/@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@.lib")
+    set(@PROJECT_NAME@_LIBRARIES_RELEASE "${TOFFY_OATPP_PACKAGE_PREFIX}/@INSTALL_LIB_DIR@/@PROJECT_NAME@.lib")
+    set(@PROJECT_NAME@_LIBRARIES_DEBUG "${TOFFY_OATPP_PACKAGE_PREFIX}/@INSTALL_LIB_DIR@/@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@.lib")
 else()
     #set(@PROJECT_NAME@_LIBRARIES_RELEASE "@CMAKE_INSTALL_PREFIX@/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_SHARED_LIBRARY_SUFFIX@")
     #set(@PROJECT_NAME@_LIBRARIES_DEBUG "@CMAKE_INSTALL_PREFIX@/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@@CMAKE_SHARED_LIBRARY_SUFFIX@")
-    set(@PROJECT_NAME@_LIBRARIES_RELEASE "${PACKAGE_PREFIX_DIR}/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_SHARED_LIBRARY_SUFFIX@")
-    set(@PROJECT_NAME@_LIBRARIES_DEBUG "${PACKAGE_PREFIX_DIR}/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@@CMAKE_SHARED_LIBRARY_SUFFIX@")
+    set(@PROJECT_NAME@_LIBRARIES_RELEASE "${TOFFY_OATPP_PACKAGE_PREFIX}/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_SHARED_LIBRARY_SUFFIX@")
+    set(@PROJECT_NAME@_LIBRARIES_DEBUG "${TOFFY_OATPP_PACKAGE_PREFIX}/@INSTALL_LIB_DIR@/lib@PROJECT_NAME@@CMAKE_DEBUG_POSTFIX@@CMAKE_SHARED_LIBRARY_SUFFIX@")
 endif()
 if(@CMAKE_BUILD_TYPE@ MATCHES Debug)
     list(APPEND @PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_LIBRARIES_DEBUG})
