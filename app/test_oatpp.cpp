@@ -22,13 +22,17 @@
 
 #include <toffy/filterfactory.hpp>
 #include <toffy/player.hpp>
+#if TOFFYOATPP_WITH_BTA
 #include <toffy/bta/bta.hpp>
+#endif
 
 #include "toffy_oatpp/globals.hpp"
 
 #include "toffy_oatpp/toffy/webAdapter.hpp"
 #include "toffy_oatpp/webapi/webApp.hpp"
+#if TOFFYOATPP_WITH_BTA
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
+#endif
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
 using namespace std;

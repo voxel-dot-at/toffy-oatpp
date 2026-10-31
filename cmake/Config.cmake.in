@@ -26,6 +26,20 @@ find_dependency(oatpp-swagger @oatpp-swagger_VERSION@)
 set(@PROJECT_NAME@_DEFINITIONS @DEFINITIONS@)
 #add_definitions( ${@PROJECT_NAME@_DEFINITIONS} )
 
+#####################################################################################
+# Feature flags of this build — mirrors toffy's toffy_WITH_BTA, same reasoning.
+#####################################################################################
+# Always substituted, 0 or 1: a consumer must be able to tell "built without BTA"
+# from "built before the flag existed". The compile definition
+# TOFFYOATPP_WITH_BTA travels on the imported target, so `#if` in an application
+# reads this library; the variables here are for CMake-level decisions, and
+#   find_package(toffy_oatpp 0.1 REQUIRED COMPONENTS BTA)
+# is how an app that cannot work without the camera endpoints says so.
+set(@PROJECT_NAME@_WITH_BTA @TOFFYOATPP_WITH_BTA@)
+set(@PROJECT_NAME@_BTA_FOUND @TOFFYOATPP_WITH_BTA@)
+
+message(STATUS "Found @PROJECT_NAME@ ${@PROJECT_NAME@_VERSION}: BTA endpoints ${@PROJECT_NAME@_WITH_BTA}")
+
 ################################################################################
 # Include directories to add to the user project:
 ################################################################################

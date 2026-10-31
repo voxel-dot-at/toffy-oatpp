@@ -18,12 +18,16 @@
 
 #include <toffy/filterfactory.hpp>
 #include <toffy/player.hpp>
+#if TOFFYOATPP_WITH_BTA
 #include <toffy/bta/bta.hpp>
+#endif
 
 #include "toffy_oatpp/toffy/webAdapter.hpp"
 
 #include "toffy_oatpp/webapi/webApp.hpp"
+#if TOFFYOATPP_WITH_BTA
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
+#endif
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 
 using namespace std;
@@ -47,10 +51,12 @@ static bool init_toffy_web()
 static void registerOatppControllers(WebApiState &state,
                                      webapi::WebAdapter *webAdap)
 {
+#if TOFFYOATPP_WITH_BTA
     auto btaAdapCtrl = std::make_shared<BtaAdapterController>();
 
     btaAdapCtrl->registerBta(state.bta);
     toffy_oatpp::webapi::registerController(btaAdapCtrl);
+#endif
 
     auto fic = std::make_shared<FrameInfoController>();
     fic->setApi(&state.api);
@@ -68,6 +74,13 @@ void setupGlobalState(WebApiState &state, bool withSwagger,
 
     toffy::FilterBank *fb = player->filterBank();
 
+#if TOFFYOATPP_WITH_BTA
+    // Looking the capturer up by type name needs the complete
+    // toffy::capturers::Bta type, which only exists in a toffy built with the
+    // bta SDK. With BTA off there is no such filter type to find, so the whole
+    // lookup goes away and state.bta stays nullptr — which is the value every
+    // consumer already tests (webApi.cpp registers the controller behind
+    // `if (systemState->bta)`), so nothing downstream has to change.
     const std::string BTA_NAME = "bta";
 
     {  // find bta
@@ -83,6 +96,7 @@ void setupGlobalState(WebApiState &state, bool withSwagger,
                  << endl;
         }
     }
+#endif
 
     // initialize oatpp controller objects:
     // web api::: the WebAdapter is a filter, and since toffy 2.0 (P2-5) the bank

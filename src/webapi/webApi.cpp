@@ -23,7 +23,9 @@
 #include "oatpp-swagger/AsyncController.hpp"
 
 #include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
+#if TOFFYOATPP_WITH_BTA
 #include "toffy_oatpp/webapi/controller/btaAdapterController.hpp"
+#endif
 #include "toffy_oatpp/webapi/controller/frameInfoController.hpp"
 #include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
 
@@ -126,6 +128,7 @@ void registerController(
 
 static void addInternalControllers()
 {
+#if TOFFYOATPP_WITH_BTA
     if (systemState->bta) {
         OATPP_LOGd("WEBAPI", "registering BTA controller for {}", systemState->bta->name());
 
@@ -133,6 +136,15 @@ static void addInternalControllers()
         bac->registerBta(systemState->bta);
         registerController(bac);
     }
+#else
+    // Built against a toffy without the bta SDK (P1-13): the /api/bta* endpoints
+    // are not in this binary at all — not 404, not 503, not in the swagger
+    // listing. That matches the runtime rule above (no bta filter, no controller)
+    // rather than inventing a new one; a 503 would advertise a camera this build
+    // can never talk to. The CMake configure line states which case this is.
+    OATPP_LOGw("WEBAPI", "BTA support not compiled in — /api/bta* endpoints are not "
+                         "available (libtoffy was built without the bta SDK)");
+#endif
     //    registerController(std::make_shared<WebAdapterController>());
 }
 

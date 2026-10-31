@@ -191,6 +191,51 @@ if (toffy_FOUND)
     list(APPEND LIBS ${toffy_LIBRARIES})
 endif()
 
+################################################################################
+# Is BTA in the toffy we are building against?  (P1-13)
+#
+# The BTA adapter controller includes <toffy/bta/bta.hpp> and <toffy/bta/
+# BtaWrapper.hpp>, and toffy installs those only when it was built with the
+# proprietary SDK — so against a BTA-less toffy this library did not compile at
+# all, which is the first thing toffy's own consumer gate found (P0-2). The flag
+# comes from toffyConfig.cmake (`toffy_WITH_BTA`, 0 or 1, always defined there);
+# `find_package(toffy 2.0 REQUIRED COMPONENTS BTA)` is the alternative for a build
+# that cannot work without it, and fails with CMake's own message.
+#
+# What the flag does to the API: the /api/bta* endpoints are **absent**, not
+# 503-ing. That is not a shortcut — webApi.cpp already refuses to register the
+# controller when there is no bta filter in the bank (`if (systemState->bta)`), so
+# "no BTA hardware, therefore no BTA endpoints" is the existing contract and
+# compile-time absence is the same statement one level earlier. An endpoint that
+# answers 503 would advertise in swagger a camera this build can never talk to.
+################################################################################
+if (DEFINED toffy_WITH_BTA)
+    set(TOFFYOATPP_WITH_BTA ${toffy_WITH_BTA})
+    set(_bta_provenance "toffyConfig.cmake: toffy_WITH_BTA=${toffy_WITH_BTA}")
+else()
+    # A toffy older than the flag. Undefined must NOT read as "no": that would
+    # silently drop the BTA endpoints from a build whose toffy has them, and a
+    # silently missing feature is the bug this whole item is about. Probe instead,
+    # and say that we probed. The loop is not decoration: toffy_INCLUDE_DIRS is a
+    # list (and in practice carries an empty leading element), and `if(EXISTS)` on
+    # a list is a question that has no answer — so test each entry and report the
+    # one that decided it.
+    set(_bta_hdr "")
+    foreach(_toffy_inc IN LISTS toffy_INCLUDE_DIRS)
+        if (_toffy_inc AND EXISTS "${_toffy_inc}/toffy/bta/bta.hpp")
+            set(_bta_hdr "${_toffy_inc}/toffy/bta/bta.hpp")
+            break()
+        endif()
+    endforeach()
+    if (_bta_hdr)
+        set(TOFFYOATPP_WITH_BTA 1)
+    else()
+        set(TOFFYOATPP_WITH_BTA 0)
+    endif()
+    set(_bta_provenance "this toffy does not export toffy_WITH_BTA — probed (${_bta_hdr})")
+endif()
+message(STATUS "BTA adapter endpoints: ${TOFFYOATPP_WITH_BTA} (${_bta_provenance})")
+
 
 # Boost
 # no `thread` component: nothing here uses boost::thread or boost::mutex -- the
@@ -258,7 +303,18 @@ add_subdirectory(app)
 
 add_subdirectory(tests)
 
-install(DIRECTORY "include/" DESTINATION "include/")
+# Installed headers. The BTA adapter controller header is excluded from a BTA-less
+# install: it includes toffy/bta/*.hpp, which such a toffy does not ship, so
+# installing it would hand a consumer a header it cannot compile — the same shape
+# as toffy's own P0-5 (public headers pointing at a toffy that is not there),
+# caught here before it ships rather than by a user. The DTO stays: it is pure
+# oatpp and compiles either way.
+if (TOFFYOATPP_WITH_BTA)
+    install(DIRECTORY "include/" DESTINATION "include/")
+else()
+    install(DIRECTORY "include/" DESTINATION "include/"
+            PATTERN "btaAdapterController.hpp" EXCLUDE)
+endif()
 
 install(
     TARGETS ${PROJECT_NAME}
