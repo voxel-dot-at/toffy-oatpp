@@ -21,7 +21,8 @@ target_link_libraries( toffy_oatpp PUBLIC    ${LIBS}  )
 # application's `#if TOFFYOATPP_WITH_BTA` then describes the library it is linking,
 # not the build directory it happens to be standing in. Same rule toffy now applies
 # to TOFFY_WITH_BTA.
-target_compile_definitions(toffy_oatpp PUBLIC "TOFFYOATPP_WITH_BTA=${TOFFYOATPP_WITH_BTA}")
+target_compile_definitions(toffy_oatpp PUBLIC "TOFFYOATPP_WITH_BTA=${TOFFYOATPP_WITH_BTA}"
+        "TOFFYOATPP_WITH_SWAGGER=${TOFFYOATPP_WITH_SWAGGER_FLAG}")
 set_property(TARGET toffy_oatpp PROPERTY VERSION ${PROJECT_VERSION})
 set_property(TARGET toffy_oatpp PROPERTY SOVERSION ${PROJECT_VERSION})
 install (TARGETS toffy_oatpp

@@ -25,7 +25,9 @@
 
 #include "oatpp/macro/component.hpp"
 
+#if TOFFYOATPP_WITH_SWAGGER
 #include "toffy_oatpp/webapi/swaggerComponent.hpp"
+#endif
 
 /**
  *  Class which creates and holds Application components and registers components in oatpp::base::Environment
@@ -35,9 +37,14 @@ class AppComponent
 {
    public:
     /**
-   *  Swagger component
+   *  Swagger component — debug/diagnostic only, and absent from a build
+   *  configured with -DTOFFYOATPP_WITH_SWAGGER=OFF (which is also what drops the
+   *  oatpp-swagger dependency; the flag arrives on the target's interface, so it
+   *  describes the library being linked rather than the tree being compiled).
    */
+#if TOFFYOATPP_WITH_SWAGGER
     SwaggerComponent swaggerComponent;
+#endif
 
     /**
    *  Create Router component

@@ -4,6 +4,19 @@ option(BUILD_TESTS "build tests" OFF)
 option(ENABLE_CLIENT "Enable client code to be built" ON)
 option(LINK_ABSL "explicitely link abseil components" ON)
 
+# The swagger UI is a debugging surface — it is how a human finds the endpoints of a
+# box they are standing in front of, and it is not what a machine client uses. Off,
+# the build drops oatpp-swagger entirely: no find_package, no link line, no
+# find_dependency in the installed package config, and no `SwaggerComponent` in
+# `AppComponent`. Default ON because that is what every existing consumer gets today;
+# CI and production images are the builds that want to say OFF, and the reason they
+# can is that oatpp-swagger has no release to pin to — upstream's newest tag is 1.3.1
+# while this build asks for 1.4.0, which exists only as a master commit (measured
+# 2026-10-30, and the reason toffy's consumer job pins a SHA and asserts the version
+# string). A dependency that can only be pinned by SHA should not be one that a
+# production build cannot do without.
+option(TOFFYOATPP_WITH_SWAGGER "build the swagger-ui endpoints (debug/diagnostic)" ON)
+
 project (toffy_oatpp)
 
 set (toffy_oatpp_VERSION_MAJOR 0)
@@ -252,20 +265,50 @@ add_definitions(-DBOOST_ALL_DYN_LINK )
 
 # OAT++
 find_package(oatpp          1.4.0 REQUIRED)
-find_package(oatpp-swagger  1.4.0 REQUIRED)
 
-include_directories("${oatpp-swagger_INCLUDE_DIRS}" ${oatpp_INCLUDE_DIRS})
+include_directories(${oatpp_INCLUDE_DIRS})
 link_directories(${oatpp_LIBRARIES_DIRS})
-link_directories(${oatpp-swagger_LIBRARIES_DIRS})
 
-list(APPEND LIBS oatpp::oatpp  oatpp::oatpp-test oatpp::oatpp-swagger)
+list(APPEND LIBS oatpp::oatpp  oatpp::oatpp-test)
 message("OAT INC " ${oatpp_INCLUDE_DIRS})
-message("OAT INC " ${oatpp-swagger_INCLUDE_DIRS})
 
-add_definitions(
-        ## define path to swagger-ui static resources folder
-        -DOATPP_SWAGGER_RES_PATH="${oatpp-swagger_INCLUDE_DIRS}/../bin/oatpp-swagger/res"
-)
+# Numeric form, always defined. `option()` yields ON/OFF, and `-D…=ON` on a command
+# line is not `1`: the preprocessor reads the token `ON` as an undefined identifier,
+# so `#if TOFFYOATPP_WITH_SWAGGER` is false in a swagger-ON build. Measured — the
+# first version of this block produced `-DTOFFYOATPP_WITH_SWAGGER=ON`, compiled the
+# swagger component out of the default build, and still linked oatpp-swagger, so both
+# configurations built and only `nm` could tell them apart. Same reason toffy's
+# TOFFY_WITH_BTA is documented as "always defined, 0 or 1".
+if (TOFFYOATPP_WITH_SWAGGER)
+    set(TOFFYOATPP_WITH_SWAGGER_FLAG 1)
+else()
+    set(TOFFYOATPP_WITH_SWAGGER_FLAG 0)
+endif()
+
+if (TOFFYOATPP_WITH_SWAGGER)
+    find_package(oatpp-swagger  1.4.0 REQUIRED)
+    include_directories("${oatpp-swagger_INCLUDE_DIRS}")
+    link_directories(${oatpp-swagger_LIBRARIES_DIRS})
+    list(APPEND LIBS oatpp::oatpp-swagger)
+    message("OAT INC " ${oatpp-swagger_INCLUDE_DIRS})
+
+    add_definitions(
+            ## define path to swagger-ui static resources folder
+            -DOATPP_SWAGGER_RES_PATH="${oatpp-swagger_INCLUDE_DIRS}/../bin/oatpp-swagger/res"
+    )
+    # What the installed package config will say to look for. Substituted into
+    # cmake/Config.cmake.in as a whole statement, because with swagger off the
+    # version variable does not exist and `find_dependency(oatpp-swagger )` is a
+    # consumer's confusing error waiting to happen, not a skipped dependency.
+    set(TOFFY_OATPP_SWAGGER_FIND_DEP
+        "find_dependency(oatpp-swagger ${oatpp-swagger_VERSION})")
+else()
+    # Not a soft failure: if a caller asked for swagger and it is off, the
+    # configure says so once, here, rather than the application discovering that
+    # /swagger/ui 404s in the field.
+    set(TOFFY_OATPP_SWAGGER_FIND_DEP "# oatpp-swagger is not a dependency of this build")
+    message(STATUS "swagger-ui: OFF — oatpp-swagger is not required, not linked and not declared")
+endif()
 
 # Now that the dependency versions are known, generate the package config from them.
 #   * toffy_oatpp's config used to declare no dependency at all, so every consumer had

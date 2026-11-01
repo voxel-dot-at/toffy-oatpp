@@ -19,8 +19,10 @@
 
 #include "oatpp/network/Server.hpp"
 
+#if TOFFYOATPP_WITH_SWAGGER
 #include "oatpp-swagger/Controller.hpp"
 #include "oatpp-swagger/AsyncController.hpp"
+#endif
 
 #include "toffy_oatpp/webapi/controller/staticContentsController.hpp"
 #if TOFFYOATPP_WITH_BTA
@@ -31,7 +33,9 @@
 
 #include "toffy_oatpp/toffy/webAdapter.hpp"
 
+#if TOFFYOATPP_WITH_SWAGGER
 #include "toffy_oatpp/webapi/swaggerComponent.hpp"
+#endif
 #include "toffy_oatpp/webapi/appComponent.hpp"
 
 #include "toffy_oatpp/globals.hpp"
@@ -81,10 +85,19 @@ class WebApi
             docEndpoints.append(ctrl->getEndpoints());
         }
 
+        // The swagger UI is a debugging surface, and it is now also a build
+        // decision: with TOFFYOATPP_WITH_SWAGGER=0 neither the component nor
+        // oatpp-swagger itself is in this binary, and the runtime flag below has
+        // nothing to switch. A production build that never serves /swagger/ui
+        // therefore does not carry a pinned-until-1.5 dependency to do it, and a
+        // caller that asks for the UI at runtime on such a build gets the same
+        // answer it would get from a router with no such route: a 404.
+#if TOFFYOATPP_WITH_SWAGGER
         if (systemState->enableSwaggerUi) {
             router->addController(
                 oatpp::swagger::AsyncController::createShared(docEndpoints));
         }
+#endif
 
         // static contents:
         router->addController(std::make_shared<StaticContentsController>());

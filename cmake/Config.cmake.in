@@ -41,7 +41,11 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(toffy @toffy_VERSION@)
 find_dependency(oatpp @oatpp_VERSION@)
-find_dependency(oatpp-swagger @oatpp-swagger_VERSION@)
+# oatpp-swagger only when this build has the swagger-ui. Substituted as a whole
+# statement: with TOFFYOATPP_WITH_SWAGGER=OFF there is no oatpp-swagger_VERSION to
+# substitute, and a bare `find_dependency(oatpp-swagger )` would make every consumer
+# of a swagger-less build hunt for a package that was never a dependency.
+@TOFFY_OATPP_SWAGGER_FIND_DEP@
 
 set(@PROJECT_NAME@_DEFINITIONS @DEFINITIONS@)
 #add_definitions( ${@PROJECT_NAME@_DEFINITIONS} )
@@ -58,7 +62,14 @@ set(@PROJECT_NAME@_DEFINITIONS @DEFINITIONS@)
 set(@PROJECT_NAME@_WITH_BTA @TOFFYOATPP_WITH_BTA@)
 set(@PROJECT_NAME@_BTA_FOUND @TOFFYOATPP_WITH_BTA@)
 
-message(STATUS "Found @PROJECT_NAME@ ${@PROJECT_NAME@_VERSION}: BTA endpoints ${@PROJECT_NAME@_WITH_BTA}")
+# Same rule for the swagger-ui: always 0 or 1, so a consumer can tell "built without
+# it" from "built before anyone asked". It is a debug surface, so the expected answer
+# in a production image is 0 — and `find_package(toffy_oatpp … COMPONENTS Swagger)`
+# is deliberately *not* offered: there is nothing a consumer needs from the UI, and a
+# component that no build-dependency backs would be a gate that cannot be satisfied.
+set(@PROJECT_NAME@_WITH_SWAGGER @TOFFYOATPP_WITH_SWAGGER_FLAG@)
+
+message(STATUS "Found @PROJECT_NAME@ ${@PROJECT_NAME@_VERSION}: BTA endpoints ${@PROJECT_NAME@_WITH_BTA}, swagger-ui ${@PROJECT_NAME@_WITH_SWAGGER}")
 
 ################################################################################
 # Include directories to add to the user project:
