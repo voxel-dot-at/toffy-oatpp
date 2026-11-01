@@ -283,7 +283,16 @@ configure_package_config_file("cmake/Config.cmake.in"
 #  to add_definitions, never read by anything. The same flags now arrive through
 #  ${toffy_DEFINITIONS}, which is the one place they should be set.)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/api ${CMAKE_CURRENT_SOURCE_DIR}/include )
+# BEFORE, and that is not cosmetic. toffy and toffy_oatpp install into the same
+# prefix, and `${toffy_INCLUDE_DIRS}` above is that prefix — so a plain
+# include_directories() here, at the end of the file, puts the *previously
+# installed* copy of this project's own public headers ahead of the ones being
+# edited. Measured: an edit to include/toffy_oatpp/webapi/appComponent.hpp was
+# silently ignored — `flags.make` lists `-I <stage>/include` before
+# `-I <src>/include`, the compile used the stale header, and the behaviour the
+# edit was supposed to change did not change, with no warning anywhere. A
+# project has to see its own headers first.
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/api ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 if(CMAKE_BUILD_TYPE MATCHES Release)
     message("RELEASE BUILD")
