@@ -1,0 +1,298 @@
+name: CI
+
+# toffy-oatpp's own build gate.
+#
+# Why this exists in this repository. Until now the only thing that built this
+# library on a clean machine was a job in **toffy** (`consumer-build.yml`), which
+# stages toffy and points a clone of this repository at it. That job is toffy's
+# gate and it earns its keep there — it is what catches a toffy commit breaking a
+# consumer. But it means a break in *this* repository arrives as someone else's
+# red run, and the only part of it that reaches the Actions page is whatever
+# matched `error:` in a grep: run 41354081913 said `collect2: error: ld returned 1
+# exit status` and nothing else, because the linker's actual complaint does not
+# contain that string. A library whose build health is only observable from
+# another repository is a library that breaks without knowing it. This workflow is
+# the same build, observed here, with the whole log.
+#
+# What it gates:
+#   * configure, build and install of the library, in Debug and Release;
+#   * both values of TOFFYOATPP_WITH_SWAGGER — and the OFF cell does not install
+#     oatpp-swagger at all, so if the option ever stops meaning what it says, that
+#     cell fails to find a package that should not be looked for;
+#   * the toffy symbols this library binds to, against ci/link-surface.txt.
+#
+# What it does NOT gate, stated rather than discovered:
+#   * the BTA adapter endpoints. There is no Becom SDK on a hosted runner, so toffy
+#     is always staged BTA-off here and `btaAdapterController.cpp` is never
+#     compiled. That path is covered by the self-hosted boxes cell in toffy, and by
+#     nothing else;
+#   * runtime behaviour of any kind — the web api needs a player, and the player
+#     historically wanted a camera;
+#   * `tests/` and `app/`. They are not built here (`BUILD_TESTS` stays at its
+#     default OFF) because nobody has measured that they run headless, and a CI step
+#     that passes because it skipped the thing it was named after is the failure
+#     mode this repository keeps writing down. Wiring them up is a change with a
+#     measurement in it, not a flag flipped.
+#
+# Toolchain: `ubuntu-24.04`, pinned, not `-latest`, and the distro CMake (3.8 on
+# 22.04 → 3.28 here) rather than a 4.x. Same contract as toffy: the deployment
+# targets ship CMake 3, and CMake 4 removed FindBoost, which both this project and
+# toffy still use. A build that only works on a moving image is a build that fails
+# on the day the image moves.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly. toffy moves even when this repository does not, and the pin below is
+    # a deliberate choice to be behind it: the schedule is where "the next toffy
+    # breaks us" gets seen before it is a surprise in toffy's consumer cell.
+    - cron: '23 4 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The toffy this library is built and tested against. Pin a tag, never a branch:
+  # toffy's `main` moved twice on the one day it moved at all, and a CI job that
+  # follows a branch reports someone else's breakage as yours.
+  #
+  # Two things to know about this pin, both measured while writing it:
+  #   * `v2.0.0` predates toffy's `WITHOUT_BTA` option (it auto-detects the SDK and
+  #     nothing else), so what "BTA off" means for this pin depends on the machine.
+  #     On a hosted runner that is deterministic — no SDK, so off — but it is off
+  #     by absence, not by being asked.
+  #   * it also predates `toffy_WITH_BTA` (exported later, toffy@ab3d6a3), so this
+  #     build exercises the *probe* path in CMakeLists.txt rather than the flag.
+  #     That is coverage worth having, and it is why the pin is not simply "latest".
+  TOFFY_REF: v2.0.0
+  # oatpp and oatpp-swagger have no 1.4.0 tag to pin to: upstream's newest is
+  # 1.3.1, and `1.4.0` exists only as a string in a header on master. Pinned by
+  # SHA and asserted by version string, copied from the recipe that works in
+  # toffy's consumer job — where the first version of that step said `--branch
+  # 1.4.0` and every cell died in under a second.
+  OATPP_SHA: f83d648fd82dc222ef88aabbafb68efbd7d7bf50
+  OATPP_SWAGGER_SHA: 8cb460b546e84b06939a12897c85a6d863c1c53e
+
+jobs:
+  # --------------------------------------------------------------------------
+  # Stage toffy once for all four cells.
+  # --------------------------------------------------------------------------
+  stage-toffy:
+    name: stage toffy (${{ env.TOFFY_REF }})
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config git \
+            libboost-all-dev libboost-system-dev libboost-filesystem-dev \
+            libboost-log-dev libboost-program-options-dev libboost-date-time-dev \
+            libboost-serialization-dev libboost-chrono-dev \
+            libopencv-dev libeigen3-dev libflann-dev \
+            libpcl-dev libusb-1.0-0-dev libopenni2-dev
+
+      - name: Clone toffy at the pin
+        # Full history with tags, always — not --depth 1. toffy's version comes
+        # from `git describe`, a shallow clone has no tags, and the staged tree
+        # then configures as `-128-NOTFOUND`, which becomes its SONAME and its
+        # package config version; the consumer's `find_package(toffy 2.0)` fails
+        # with "not compatible" and the diagnosis points at the consumer. toffy hit
+        # exactly this in its own staging job (P0-2).
+        run: |
+          set -euxo pipefail
+          git clone --branch "${TOFFY_REF}" https://github.com/voxel-dot-at/toffy.git \
+            "$RUNNER_TEMP/toffy"
+          git -C "$RUNNER_TEMP/toffy" describe --tags
+
+      - name: Configure, build, install
+        run: |
+          set -euxo pipefail
+          cmake -S "$RUNNER_TEMP/toffy" -B "$RUNNER_TEMP/toffy-build" \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/toffy-build" -j "$(nproc)"
+          cmake --install "$RUNNER_TEMP/toffy-build" --prefix "$RUNNER_TEMP/toffy-stage"
+          # Assert the staged prefix is usable rather than finding out in four
+          # cells' worth of downstream errors: the package config must exist and
+          # the version must have parsed. `NOTFOUND` in the file name is the
+          # signature of the shallow-clone failure above.
+          test -d "$RUNNER_TEMP/toffy-stage/lib/cmake/toffy"
+          ls "$RUNNER_TEMP/toffy-stage"/lib/libtoffy.so*
+          if ls "$RUNNER_TEMP/toffy-stage"/lib | grep -q NOTFOUND; then
+            echo '::error::staged toffy has a NOTFOUND version — git_describe found no tag'
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toffy-stage
+          path: ${{ runner.temp }}/toffy-stage
+          retention-days: 3
+          if-no-files-found: error
+
+  # --------------------------------------------------------------------------
+  # The library itself.
+  #
+  # Debug stays in the matrix: this project adds -Wall -ggdb -O0 unconditionally,
+  # so Debug is the configuration where the compiler still has something to say.
+  # swagger on/off is the other axis, and it is cheap: the OFF cell skips
+  # oatpp-swagger entirely.
+  # --------------------------------------------------------------------------
+  build:
+    name: build (${{ matrix.build_type }}, swagger ${{ matrix.swagger }})
+    needs: stage-toffy
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+        # `on`/`off` are YAML booleans — a matrix of `[on, off]` arrives as
+        # `[true, false]`, `matrix.swagger == 'on'` is then never true, and the
+        # swagger dependency silently stops being installed while every cell still
+        # passes. Spelled out for exactly that reason.
+        swagger: [enabled, disabled]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tags: the version comes from git_describe, and a checkout without them
+          # installs `libtoffy_oatpp.so.-128-NOTFOUND…`. Measured, in this
+          # repository, on the way to the tag that fixed it (P1-4).
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: toffy-stage
+          path: ${{ runner.temp }}/toffy-stage
+
+      - name: Install dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config git \
+            libboost-all-dev libboost-system-dev libboost-filesystem-dev \
+            libboost-log-dev libboost-program-options-dev libboost-date-time-dev \
+            libboost-serialization-dev libboost-chrono-dev \
+            libopencv-dev libeigen3-dev libflann-dev \
+            libpcl-dev libusb-1.0-0-dev libopenni2-dev
+
+      - name: Install oatpp
+        run: |
+          set -euxo pipefail
+          git init -q "$RUNNER_TEMP/oatpp"
+          git -C "$RUNNER_TEMP/oatpp" fetch -q --depth 1 https://github.com/oatpp/oatpp.git "$OATPP_SHA"
+          git -C "$RUNNER_TEMP/oatpp" checkout -q FETCH_HEAD
+          # Assert the version, do not trust the pin: if upstream tags 1.4.0 or
+          # moves master, this says so in one line.
+          grep -q '#define OATPP_VERSION "1.4.0"' "$RUNNER_TEMP/oatpp/src/oatpp/Environment.hpp"
+          cmake -S "$RUNNER_TEMP/oatpp" -B "$RUNNER_TEMP/oatpp-build" \
+            -DCMAKE_BUILD_TYPE=Release -DOATPP_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/oatpp-build" -j "$(nproc)"
+          sudo cmake --install "$RUNNER_TEMP/oatpp-build"
+
+      - name: Install oatpp-swagger (only when the UI is enabled)
+        if: matrix.swagger == 'enabled'
+        run: |
+          set -euxo pipefail
+          git init -q "$RUNNER_TEMP/oatpp-swagger"
+          git -C "$RUNNER_TEMP/oatpp-swagger" fetch -q --depth 1 \
+            https://github.com/oatpp/oatpp-swagger.git "$OATPP_SWAGGER_SHA"
+          git -C "$RUNNER_TEMP/oatpp-swagger" checkout -q FETCH_HEAD
+          grep -q 'set(OATPP_THIS_MODULE_VERSION "1.4.0")' "$RUNNER_TEMP/oatpp-swagger/CMakeLists.txt"
+          cmake -S "$RUNNER_TEMP/oatpp-swagger" -B "$RUNNER_TEMP/oatpp-swagger-build" \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/oatpp-swagger-build" -j "$(nproc)"
+          sudo cmake --install "$RUNNER_TEMP/oatpp-swagger-build"
+
+      - name: Configure
+        run: |
+          set -uo pipefail
+          case "${{ matrix.swagger }}" in
+            enabled)  swagger_flag=ON  ;;
+            disabled) swagger_flag=OFF ;;
+          esac
+          rc=0
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}" \
+            -DTOFFYOATPP_WITH_SWAGGER="$swagger_flag" \
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/toffy-stage" 2>&1 | tee /tmp/configure.log \
+            || rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            printf '::error::configure failed (rc %s) for %s / swagger %s\n' \
+              "$rc" "${{ matrix.build_type }}" "${{ matrix.swagger }}"
+            grep -E 'CMake Error' -A 8 /tmp/configure.log | head -25 | sed 's/^/::error::/'
+            exit "$rc"
+          fi
+          # Say what the build decided, in the log and not only in the flags:
+          # these two lines are what a reader needs to know the cell tested what
+          # its name claims.
+          grep -E 'BTA adapter endpoints|swagger-ui|toffy version' /tmp/configure.log || true
+
+      - name: Build and install
+        run: |
+          set -uo pipefail
+          rc=0
+          cmake --build build -j "$(nproc)" 2>&1 | tee /tmp/build.log || rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            printf '::error::build failed (rc %s)\n' "$rc"
+            # The linker's complaint, which is the line toffy's consumer job never
+            # surfaced: `collect2: error: ld returned 1 exit status` on its own is
+            # not a diagnosis. undefined references are.
+            grep -E 'undefined reference|error:|cannot find' /tmp/build.log \
+              | head -20 | sed 's/^/::error::/'
+            exit "$rc"
+          fi
+          sudo cmake --install build --prefix "$RUNNER_TEMP/inst"
+          ls "$RUNNER_TEMP/inst"/lib/libtoffy_oatpp.so*
+
+      - name: Link surface against the recorded baseline
+        # What this library binds to in libtoffy, diffed against ci/link-surface.txt.
+        # The point is not the count, it is the direction: an *addition* is new
+        # coupling that nobody agreed to, and this library's whole reason to exist is
+        # to be the thin edge against toffy. Removals are fine and reported.
+        #
+        # Blessed from a BTA-off build, because that is what a hosted runner builds —
+        # the mistake toffy's own ABI gate made when it landed was blessing it from a
+        # development machine that had the SDK, and every CI run then "failed".
+        #
+        # Measured capable of failing, and measured stable: swagger on and off produce
+        # identical surfaces (the UI is not a toffy dependency), and the BTA-off
+        # surface is the 15 symbols toffy's consumer baseline records.
+        run: |
+          set -uo pipefail
+          lib=$(ls "$RUNNER_TEMP/inst"/lib/libtoffy_oatpp.so.* | grep -v '\.so$' | head -1)
+          nm -D --undefined-only "$lib" | awk '$1=="U"{print $2}' \
+            | c++filt | grep -E 'toffy::' | sed 's/std::__cxx11::/std::/g' \
+            | sort -u > /tmp/surface.txt
+          base=$(grep -vE '^[[:space:]]*(#|$)' ci/link-surface.txt | sort -u)
+          printf '%s\n' "$base" > /tmp/base.txt
+          echo "surface: $(wc -l < /tmp/surface.txt) symbols, baseline $(wc -l < /tmp/base.txt)"
+          new=$(comm -13 /tmp/base.txt /tmp/surface.txt)
+          gone=$(comm -23 /tmp/base.txt /tmp/surface.txt)
+          if [ -n "$gone" ]; then
+            echo "symbols no longer used (fine, and worth re-blessing):"
+            printf '%s\n' "$gone" | sed 's/^/  - /'
+          fi
+          if [ -n "$new" ]; then
+            echo '::error::new toffy coupling, not in ci/link-surface.txt:'
+            printf '%s\n' "$new" | sed 's/^/::error::  /'
+            echo 'If this is intended, update ci/link-surface.txt in the same commit and say why.' \
+              | sed 's/^/::error::/'
+            exit 1
+          fi
+          echo "link surface unchanged"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs-${{ matrix.build_type }}-swagger-${{ matrix.swagger }}
+          path: /tmp/*.log
+          if-no-files-found: ignore

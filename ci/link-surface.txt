@@ -1,0 +1,35 @@
+# Recorded link surface of libtoffy_oatpp — the toffy symbols this library binds to.
+#
+# One demangled symbol per line, as `nm -D --undefined-only` reports them after
+# c++filt. DO NOT HAND-EDIT; regenerate with
+#   nm -D --undefined-only <libtoffy_oatpp.so> | awk '$1=="U"{print $2}' \
+#     | c++filt | grep -E 'toffy::' | sed 's/std::__cxx11::/std::/g' | sort -u
+# and read the diff before committing it.
+#
+# The direction that matters is *additions*: this library exists to be the thin
+# HTTP/JSON edge against libtoffy, and every new toffy symbol it reaches across is
+# coupling nobody agreed to. Removals are progress and are reported, not failed.
+#
+# Blessed from a **BTA-off** build, because that is what a hosted runner builds and
+# what the CI cell checks. A BTA-on build adds `toffy::capturers::Bta::*` and
+# `toffy::bta::init` — 16 symbols rather than 15 — and shows them as additions,
+# which is allowed. The same rule toffy applies to its own ABI baseline, learned the
+# hard way there: bless the configuration the gate actually runs.
+#
+# Cross-check: toffy records the same surface in its own ci/consumer-link-surface.txt
+# (15 BTA-off / 16 BTA-on). If the two disagree, one of them has drifted.
+toffy::FilterBank::add(std::shared_ptr<toffy::Filter>)
+toffy::FilterFactory::getInstance()
+toffy::FilterFactory::registerCreator(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, toffy::Filter* (*)())
+toffy::Filter::~Filter()
+toffy::Filter::Filter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned long)
+toffy::Filter::getConfig[abi:cxx11]() const
+toffy::Filter::loadConfig(boost::property_tree::basic_ptree<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&)
+toffy::Filter::loadFileConfig(std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+toffy::Filter::setState(toffy::filterState)
+toffy::Filter::updateConfig(boost::property_tree::basic_ptree<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&)
+toffy::Frame::addData(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, boost::any, toffy::Frame::SlotDataType)
+toffy::Frame::getData(std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const
+toffy::Frame::hasKey(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const
+toffy::Frame::info(std::vector<toffy::Frame::SlotInfo, std::allocator<toffy::Frame::SlotInfo> >&) const
+typeinfo for toffy::Filter
