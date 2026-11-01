@@ -40,6 +40,42 @@ Follow these steps to build the `toffy-oatpp` API project:
 
    http://localhost:8000/swagger/ui#/
 
+## Lifecycle: what linking this library costs
+
+Nothing happens when the library is loaded. The socket is bound, the async worker
+pool started and the routes set up by `webApiStart()`, on the process that asks
+for them; `webApiStop()` stops the server.
+
+That used not to be the case, and the difference is worth keeping in writing,
+because the old behaviour was invisible from inside this repository — every
+binary built *here* starts a web api, so nothing in-tree ever noticed. Before
+`67e48e7`, `webApi.cpp` held `static WebApi api;` at file scope and
+`AppComponent` built its components eagerly (the oatpp idiom is
+`OATPP_CREATE_COMPONENT(type, name)([] { ... }())` — the trailing `()` runs the
+lambda at construction). A `int main(){ return 0; }` linked against
+`libtoffy_oatpp.so` and nothing else measured:
+
+| | before | after |
+|---|---|---|
+| threads at the first line of `main` | 62 | 1 |
+| `0.0.0.0:8000` in `/proc/net/tcp` | LISTEN | absent |
+| exit | SIGSEGV, core dumped | 0 |
+
+The consumers that found it were `boxes` and `compute_single_box` — the latter
+runs with the web api switched off by default, and segfaulted on its own
+`usage()` path.
+
+One constraint to know before refactoring this again: `ContentMappers` must be
+registered **before any `ApiController` is constructed**, because a controller's
+default endpoints mapper asks the Environment for it, and applications construct
+their controllers before calling `webApiStart` (`boxes`: `make_shared` →
+`registerController` → `setupGlobalState` → `webApiStart`). Making the component
+set lazy as a whole does not work — measured, it aborts with
+`Component of given type doesn't exist: ...ContentMappers` — and oatpp 1.4's
+registry has no lazy-provider form to fall back on
+(`Environment::registerComponent(typeName, name, void*)` takes values). So: cheap
+and needed-by-everyone at load, sockets and threads at start.
+
 ## Branches
 
 - **`main`** — the line everything builds against and pins to: **`v0.1.0`**, the toffy 2.0 line.
