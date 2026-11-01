@@ -93,14 +93,28 @@ class WebApi
          * /REGISTER CONTROLLERS
          */
 
-        /* Get connection handler component */
-        OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>,
-                        connectionHandler);
+        /*
+         * The connection handler and its provider are built here, on the thread
+         * that is about to serve, and not as eagerly-constructed components.
+         * They used to be components in AppComponent, which — with the
+         * file-scope `static WebApi api;` below — meant the socket was bound and
+         * the async Processor's worker threads were running before main(), in
+         * every program that merely links this library. Measured: 62 threads and
+         * `0.0.0.0:8000` in LISTEN at the first line of a `return 0` main, and a
+         * SIGSEGV at exit in Processor::popTasks. The full measurement and the
+         * reason ContentMappers cannot move here with these two is in
+         * include/toffy_oatpp/webapi/appComponent.hpp.
+         *
+         * The port is still the one the component used to pass. Making it a
+         * WebApiState field is a behaviour change waiting for a config key, not
+         * a side effect of this one.
+         */
+        auto connectionProvider =
+            oatpp::network::tcp::server::ConnectionProvider::createShared(
+                {"0.0.0.0", 8000, oatpp::network::Address::IP_4});
 
-        /* Get connection provider component */
-        OATPP_COMPONENT(
-            std::shared_ptr<oatpp::network::ServerConnectionProvider>,
-            connectionProvider);
+        auto connectionHandler =
+            oatpp::web::server::AsyncHttpConnectionHandler::createShared(router);
 
         /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
         oatpp::network::Server server(connectionProvider, connectionHandler);

@@ -40,33 +40,48 @@ class AppComponent
     SwaggerComponent swaggerComponent;
 
     /**
-   *  Create ConnectionProvider component which listens on the port
-   */
-    OATPP_CREATE_COMPONENT(
-        std::shared_ptr<oatpp::network::ServerConnectionProvider>,
-        serverConnectionProvider)
-    ([] {
-        return oatpp::network::tcp::server::ConnectionProvider::createShared(
-            {"0.0.0.0", 8000, oatpp::network::Address::IP_4});
-    }());
-
-    /**
    *  Create Router component
    */
     OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>,
                            httpRouter)
     ([] { return oatpp::web::server::HttpRouter::createShared(); }());
 
-    /**
-   *  Create ConnectionHandler component which uses Router component to route requests
-   */
-    OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>,
-                           serverConnectionHandler)
-    ([] {
-        OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>,
-                        router);  // get Router component
-        return oatpp::web::server::AsyncHttpConnectionHandler::createShared(router);
-    }());
+    /*
+     * The connection provider and the connection handler used to be components
+     * here, and are now built by `webApiStart` (see src/webapi/webApi.cpp).
+     *
+     * `OATPP_CREATE_COMPONENT(type, name)([] { ... }())` — the trailing `()` —
+     * does not register a factory, it registers the *result*: everything below
+     * is constructed the moment an AppComponent is. `webApi.cpp` holds one at
+     * file scope, so "the moment an AppComponent is" was "when the library was
+     * loaded", before main. Measured against a `int main(){ return 0; }` linked
+     * only against libtoffy_oatpp.so:
+     *
+     *   * 62 threads at the first line of main;
+     *   * `00000000:1F40` state 0A in /proc/net/tcp — listening on 0.0.0.0:8000,
+     *     in a program that never asked for a web api and has no way to decline
+     *     one;
+     *   * SIGSEGV (core dumped) at exit, in `oatpp::async::Processor::popTasks`,
+     *     the Processor destroyed by static teardown with its workers running.
+     *
+     * The threads are the AsyncHttpConnectionHandler's oatpp `Processor`; the
+     * socket is the ConnectionProvider's. Both are only needed to *run* a
+     * server, so both are now created there.
+     *
+     * What stays here is deliberately not nothing: `ContentMappers` must be
+     * registered before any `oatpp::web::server::api::ApiController` is
+     * constructed — its default endpoints mapper asks the Environment for it.
+     * Applications build their controllers before calling `webApiStart`
+     * (`boxes` does: make_shared, registerController, setupGlobalState, start),
+     * so making the whole component set lazy is not an option; measured, it
+     * dies with
+     *
+     *   terminate: [oatpp::Environment::getComponent()]: Component of given
+     *   type doesn't exist: type='...ContentMappers'
+     *
+     * That is the line this file has to stay on: cheap and needed-by-everyone
+     * here, sockets and threads at start.
+     */
 
     /**
    *  Create ObjectMapper component to serialize/deserialize DTOs in Contoller's API
