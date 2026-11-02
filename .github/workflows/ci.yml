@@ -84,7 +84,14 @@ jobs:
   # Stage toffy once for all four cells.
   # --------------------------------------------------------------------------
   stage-toffy:
-    name: stage toffy (${{ env.TOFFY_REF }})
+    # Not `${{ env.TOFFY_REF }}`. The `env` context is not available in a job's
+    # `name` (there: github, needs, strategy, matrix, vars), and a disallowed
+    # context there does not fail a step — it fails the *workflow file*, which
+    # shows up as a run with no jobs at all, named after the file path, concluded
+    # `failure` having executed nothing. Observed: run 41358317729, this
+    # repository's first CI run. The ref is printed by the step below, where
+    # `env` is legal.
+    name: stage toffy (pinned)
     runs-on: ubuntu-24.04
     steps:
       - name: Install dependencies
@@ -99,7 +106,7 @@ jobs:
             libopencv-dev libeigen3-dev libflann-dev \
             libpcl-dev libusb-1.0-0-dev libopenni2-dev
 
-      - name: Clone toffy at the pin
+      - name: Clone toffy at ${{ env.TOFFY_REF }}
         # Full history with tags, always — not --depth 1. toffy's version comes
         # from `git describe`, a shallow clone has no tags, and the staged tree
         # then configures as `-128-NOTFOUND`, which becomes its SONAME and its
