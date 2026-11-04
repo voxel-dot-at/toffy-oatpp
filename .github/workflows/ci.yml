@@ -199,10 +199,28 @@ jobs:
           # Assert the version, do not trust the pin: if upstream tags 1.4.0 or
           # moves master, this says so in one line.
           grep -q '#define OATPP_VERSION "1.4.0"' "$RUNNER_TEMP/oatpp/src/oatpp/Environment.hpp"
+          # BUILD_SHARED_LIBS is not a style choice. oatpp's own default is OFF
+          # (`option(BUILD_SHARED_LIBS "Build shared libraries" OFF)` in the pinned
+          # 1.4.0), so without it the install is a static, non-PIC `liboatpp.a` and
+          # the shared `libtoffy_oatpp` cannot link it:
+          #
+          #   ld: liboatpp.a(Environment.cpp.o): relocation R_X86_64_TPOFF32 against
+          #   symbol '..._m_threadLocalObjectsCountE' can not be used when making a
+          #   shared object; recompile with -fPIC
+          #
+          # That is what all four cells died with on 2026-11-02 — here and in toffy's
+          # consumer cell — while every local build passed, because the local prefix
+          # has `liboatpp.so` and only the CI got a `.a`. The version assert above
+          # passes happily on a static build, which is how this survived a whole run;
+          # assert the artifact. Static oatpp is the Windows configuration, and
+          # CMakeLists.txt now refuses it at configure, so a failure here is that
+          # same rule one stage earlier, where a log is the only thing anyone gets.
           cmake -S "$RUNNER_TEMP/oatpp" -B "$RUNNER_TEMP/oatpp-build" \
-            -DCMAKE_BUILD_TYPE=Release -DOATPP_BUILD_TESTS=OFF
+            -DCMAKE_BUILD_TYPE=Release -DOATPP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=ON
           cmake --build "$RUNNER_TEMP/oatpp-build" -j "$(nproc)"
           sudo cmake --install "$RUNNER_TEMP/oatpp-build"
+          test -f /usr/local/lib/oatpp-1.4.0/liboatpp.so \
+            || { echo '::error::oatpp installed no shared library — BUILD_SHARED_LIBS=ON did not take'; exit 1; }
 
       - name: Install oatpp-swagger (only when the UI is enabled)
         if: matrix.swagger == 'enabled'
@@ -213,10 +231,13 @@ jobs:
             https://github.com/oatpp/oatpp-swagger.git "$OATPP_SWAGGER_SHA"
           git -C "$RUNNER_TEMP/oatpp-swagger" checkout -q FETCH_HEAD
           grep -q 'set(OATPP_THIS_MODULE_VERSION "1.4.0")' "$RUNNER_TEMP/oatpp-swagger/CMakeLists.txt"
+          # Shared for the same reason as oatpp itself: it goes into the same DSO.
           cmake -S "$RUNNER_TEMP/oatpp-swagger" -B "$RUNNER_TEMP/oatpp-swagger-build" \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
           cmake --build "$RUNNER_TEMP/oatpp-swagger-build" -j "$(nproc)"
           sudo cmake --install "$RUNNER_TEMP/oatpp-swagger-build"
+          test -f /usr/local/lib/oatpp-1.4.0/liboatpp-swagger.so \
+            || { echo '::error::oatpp-swagger installed no shared library'; exit 1; }
 
       - name: Configure
         run: |
@@ -251,8 +272,14 @@ jobs:
             printf '::error::build failed (rc %s)\n' "$rc"
             # The linker's complaint, which is the line toffy's consumer job never
             # surfaced: `collect2: error: ld returned 1 exit status` on its own is
-            # not a diagnosis. undefined references are.
-            grep -E 'undefined reference|error:|cannot find' /tmp/build.log \
+            # not a diagnosis. The pattern has to be the linker's own vocabulary, and
+            # the first version of it was not — the 2026-11-02 failure quoted exactly
+            # that one collect2 line, because the two lines carrying the cause
+            # (`relocation … can not be used when making a shared object`, `failed to
+            # set dynamic section sizes: bad value`) matched neither `undefined
+            # reference` nor `cannot find`. A gate that can only restate the exit
+            # status is not reporting, it is shrugging.
+            grep -E "undefined reference to|undefined symbol:|cannot find -l|can not be used when making a shared object|failed to set dynamic section sizes|DSO missing from command line|error:" /tmp/build.log \
               | head -20 | sed 's/^/::error::/'
             exit "$rc"
           fi

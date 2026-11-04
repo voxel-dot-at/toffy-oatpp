@@ -266,6 +266,35 @@ add_definitions(-DBOOST_ALL_DYN_LINK )
 # OAT++
 find_package(oatpp          1.4.0 REQUIRED)
 
+# A static oatpp is the Windows configuration. On Linux this library links the
+# shared one, and the check is here because the failure is not a configure error:
+# oatpp upstream builds **static** by default (`option(BUILD_SHARED_LIBS "Build
+# shared libraries" OFF)` in the pinned 1.4.0's CMakeLists.txt), and linking that
+# static, non-PIC oatpp into a DSO dies at link naming neither oatpp nor the flag:
+#
+#     /usr/bin/ld: /usr/local/lib/oatpp-1.4.0/liboatpp.a(Environment.cpp.o):
+#       relocation R_X86_64_TPOFF32 against symbol
+#       `_ZN5oatpp11Environment25m_threadLocalObjectsCountE' can not be used when
+#       making a shared object; recompile with -fPIC
+#     /usr/bin/ld: failed to set dynamic section sizes: bad value
+#
+# Every CI cell died that way on 2026-11-02 — all four configurations, both this
+# repository's workflow and toffy's consumer cell — while every local build passed,
+# because the local prefix has `liboatpp.so` and the CI installed `liboatpp.a`.
+# It is not only a link-time nuisance: `boxes` links oatpp itself, so an embedded
+# static copy would give one process two `oatpp::Environment`s — the object counters
+# and component registries in the symbol above are exactly the state that must not
+# be duplicated.
+get_target_property(_oatpp_type oatpp::oatpp TYPE)
+if (NOT WIN32 AND _oatpp_type STREQUAL "STATIC_LIBRARY")
+    message(FATAL_ERROR
+        "error: toffy_oatpp is a shared library and the oatpp it found is static "
+        "(oatpp::oatpp TYPE=STATIC). Rebuild oatpp with -DBUILD_SHARED_LIBS=ON: "
+        "a static oatpp cannot go into a DSO (TLS relocation error at link), and "
+        "static is the Windows configuration, not a Linux option.")
+endif()
+message(STATUS "oatpp: ${_oatpp_type}")
+
 include_directories(${oatpp_INCLUDE_DIRS})
 link_directories(${oatpp_LIBRARIES_DIRS})
 
