@@ -255,7 +255,7 @@ message(STATUS "BTA adapter endpoints: ${TOFFYOATPP_WITH_BTA} (${_bta_provenance
 # concurrency is std::thread/std::condition_variable, and toffy dropped
 # <boost/thread.hpp> from its installed headers in P2-7. The component was only ever
 # pulling libboost_thread into the link line.
-find_package(Boost COMPONENTS log_setup log program_options system
+find_package(Boost COMPONENTS program_options system
         filesystem date_time serialization chrono REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBS ${Boost_LIBRARIES})

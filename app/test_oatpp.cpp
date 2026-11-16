@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
     }
 
     toffy::Player* player;
-    player = new toffy::Player(boost::log::trivial::debug, false);
+    player = new toffy::Player(toffy::log::level::debug, false);
 
     player->loadConfig(confFile);
 

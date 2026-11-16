@@ -20,7 +20,6 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <boost/log/trivial.hpp>
 
 #include <toffy/filter_helpers.hpp>
 
@@ -58,7 +57,7 @@ WebAdapter::WebAdapter() : Filter(WebAdapter::id_name, _filter_counter)
 // virtual int loadConfig(const boost::property_tree::ptree& pt);
 boost::property_tree::ptree WebAdapter::getConfig() const
 {
-    BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << " " << id();
+    toffy::log::debug() << __FUNCTION__ << " " << id();
     boost::property_tree::ptree pt;
 
     pt = Filter::getConfig();
