@@ -103,14 +103,25 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install dependencies
+        # `liblog4cplus-dev` is toffy's logging backend since P2-17 step C: it
+        # looks the library up by pkg-config, so without it the staged toffy dies
+        # at `pkg_search_module(LOG4CPLUS REQUIRED)` -- which is what this job's
+        # first run on the v2.1.0 pin did.
+        #
+        # `libboost-log-dev` is gone from this list because neither toffy nor this
+        # repo needs Boost.Log any more. That is not proof a Boost.Log-free image
+        # can build the stack: `libboost-all-dev` still drags it in. Removing that
+        # too is the only way to actually test it, and it would cost the other
+        # components this list names individually.
         run: |
           set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake build-essential pkg-config git \
             libboost-all-dev libboost-system-dev libboost-filesystem-dev \
-            libboost-log-dev libboost-program-options-dev libboost-date-time-dev \
+            libboost-program-options-dev libboost-date-time-dev \
             libboost-serialization-dev libboost-chrono-dev \
+            liblog4cplus-dev \
             libopencv-dev libeigen3-dev libflann-dev \
             libpcl-dev libusb-1.0-0-dev libopenni2-dev
 
@@ -193,8 +204,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             cmake build-essential pkg-config git \
             libboost-all-dev libboost-system-dev libboost-filesystem-dev \
-            libboost-log-dev libboost-program-options-dev libboost-date-time-dev \
+            libboost-program-options-dev libboost-date-time-dev \
             libboost-serialization-dev libboost-chrono-dev \
+            liblog4cplus-dev \
             libopencv-dev libeigen3-dev libflann-dev \
             libpcl-dev libusb-1.0-0-dev libopenni2-dev
 
