@@ -12,12 +12,26 @@
 #
 # Blessed from a **BTA-off** build, because that is what a hosted runner builds and
 # what the CI cell checks. A BTA-on build adds `toffy::capturers::Bta::*` and
-# `toffy::bta::init` — 16 symbols rather than 15 — and shows them as additions,
+# `toffy::bta::init` — 19 symbols rather than 18 — and shows them as additions,
 # which is allowed. The same rule toffy applies to its own ABI baseline, learned the
 # hard way there: bless the configuration the gate actually runs.
 #
 # Cross-check: toffy records the same surface in its own ci/consumer-link-surface.txt
-# (15 BTA-off / 16 BTA-on). If the two disagree, one of them has drifted.
+# (18 BTA-off / 19 BTA-on). If the two disagree, one of them has drifted.
+
+# `P2-17` adds the last three: `toffy-oatpp` now logs through `toffy::log` instead of
+# Boost.Log, so it binds the record it builds and the root logger it reads. That is
+# new coupling — a web adapter that previously reached toffy only for filters and
+# frames now also reaches for its logger — and it is the price of toffy owning the
+# logging API. It is recorded here rather than waived, because the whole point of
+# this file is that additions get looked at.
+#
+# Blessed from a BTA-off build again, per the rule above. A BTA-on build of the same
+# source additionally shows `toffy::FilterBank::getFiltersByType(...)`, which is not
+# new coupling from P2-17 — it is a symbol the BTA-on library exports and the BTA-off
+# one does not. Diffing a BTA-on build against this file reports four additions, not
+# three, and that mismatch is a configuration error, not a finding.
+
 toffy::FilterBank::add(std::shared_ptr<toffy::Filter>)
 toffy::FilterFactory::getInstance()
 toffy::FilterFactory::registerCreator(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, toffy::Filter* (*)())
@@ -32,4 +46,7 @@ toffy::Frame::addData(std::basic_string<char, std::char_traits<char>, std::alloc
 toffy::Frame::getData(std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const
 toffy::Frame::hasKey(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const
 toffy::Frame::info(std::vector<toffy::Frame::SlotInfo, std::allocator<toffy::Frame::SlotInfo> >&) const
+toffy::log::logger::root()
+toffy::log::record::~record()
+toffy::log::record::record(toffy::log::logger const&, toffy::log::level)
 typeinfo for toffy::Filter
