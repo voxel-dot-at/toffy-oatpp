@@ -62,15 +62,23 @@ env:
   # toffy's `main` moved twice on the one day it moved at all, and a CI job that
   # follows a branch reports someone else's breakage as yours.
   #
-  # Two things to know about this pin, both measured while writing it:
-  #   * `v2.0.0` predates toffy's `WITHOUT_BTA` option (it auto-detects the SDK and
-  #     nothing else), so what "BTA off" means for this pin depends on the machine.
-  #     On a hosted runner that is deterministic — no SDK, so off — but it is off
-  #     by absence, not by being asked.
-  #   * it also predates `toffy_WITH_BTA` (exported later, toffy@ab3d6a3), so this
-  #     build exercises the *probe* path in CMakeLists.txt rather than the flag.
-  #     That is coverage worth having, and it is why the pin is not simply "latest".
-  TOFFY_REF: v2.0.0
+  # Moved to `v2.1.0` because this repo now calls `toffy::log`, and no earlier tag
+  # has it: `P2-17` introduced the namespace and `v2.0.0` predates it, so a pin
+  # below `v2.1.0` cannot compile this source. It is not a preference.
+  #
+  # What the old `v2.0.0` pin was buying, and what is now lost, both measured while
+  # writing it:
+  #   * `v2.0.0` predated toffy's `WITHOUT_BTA` option (it auto-detected the SDK and
+  #     nothing else), so "BTA off" there was off *by absence* on a hosted runner,
+  #     not by being asked. `v2.1.0` has the option, so BTA-off here is now explicit
+  #     -- strictly better, and it is what the matrix has always claimed to test.
+  #   * `v2.0.0` also predated `toffy_WITH_BTA` (exported at toffy@ab3d6a3), so that
+  #     build exercised the *probe* path in CMakeLists.txt rather than the flag. That
+  #     coverage is gone from this workflow. It is not gone from nowhere else: toffy's
+  #     own CI builds the BTA-off configuration on every push. If the probe path ever
+  #     needs to be exercised again, pin a throwaway job to `v2.0.0` rather than
+  #     holding the whole workflow at a tag that cannot compile the source.
+  TOFFY_REF: v2.1.0
   # oatpp and oatpp-swagger have no 1.4.0 tag to pin to: upstream's newest is
   # 1.3.1, and `1.4.0` exists only as a string in a header on master. Pinned by
   # SHA and asserted by version string, copied from the recipe that works in
