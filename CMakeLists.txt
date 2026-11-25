@@ -380,7 +380,23 @@ endif()
 
 add_subdirectory(src)
 
-add_subdirectory(app)
+# The demo binary. `app/` holds exactly one target, `test_oatpp`, and it is the
+# only thing in this repository that constructs a `toffy::Player` — every other
+# consumer brings its own driver. It is also the only target that has broken on
+# a toffy logging change: when toffy P2-17 replaced `boost::log::trivial::severity`
+# with `toffy::log::level` in that constructor, the library and its tests kept
+# building and this demo did not, so a consumer that never asks for the demo was
+# failed by a build artefact it does not ship.
+#
+# `ENABLE_CLIENT` has been declared at the top of this file since the copy-paste
+# that brought it here and read by nothing (measured: one occurrence, the
+# `option()` itself). It is now the thing that decides, which is what its name
+# already claimed, and it defaults ON so every existing build is unchanged.
+if (${ENABLE_CLIENT})
+    add_subdirectory(app)
+else()
+    message(STATUS "ENABLE_CLIENT=OFF: not building the test_oatpp demo")
+endif()
 
 add_subdirectory(tests)
 

@@ -108,17 +108,26 @@ jobs:
         # at `pkg_search_module(LOG4CPLUS REQUIRED)` -- which is what this job's
         # first run on the v2.1.0 pin did.
         #
-        # `libboost-log-dev` is gone from this list because neither toffy nor this
-        # repo needs Boost.Log any more. That is not proof a Boost.Log-free image
-        # can build the stack: `libboost-all-dev` still drags it in. Removing that
-        # too is the only way to actually test it, and it would cost the other
-        # components this list names individually.
+        # `libboost-all-dev` is gone too, and that is the part that made the
+        # Boost.Log claim testable: `all-dev` depends on `libboost-log-dev`, so as
+        # long as it was here, "neither toffy nor this repo needs Boost.Log" was a
+        # sentence about the source, not about the image. What is installed now is
+        # `libboost-dev` (headers) plus exactly the six components
+        # `find_package(Boost COMPONENTS ...)` names — program_options, system,
+        # filesystem, date_time, serialization, chrono. A Boost.Log that crept back
+        # into either CMakeLists now fails at configure instead of being satisfied
+        # silently by a package nobody asked for.
+        #
+        # Measured against the image this produces: `readelf -d` over
+        # `libtoffy_oatpp.so` lists no boost entry in NEEDED at all (Boost arrives
+        # through `libtoffy`, and --as-needed drops what is not referenced), and
+        # over `libtoffy.so` it lists none since toffy P2-17/P2-18.
         run: |
           set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake build-essential pkg-config git \
-            libboost-all-dev libboost-system-dev libboost-filesystem-dev \
+            libboost-dev libboost-system-dev libboost-filesystem-dev \
             libboost-program-options-dev libboost-date-time-dev \
             libboost-serialization-dev libboost-chrono-dev \
             liblog4cplus-dev \
@@ -198,12 +207,14 @@ jobs:
           path: ${{ runner.temp }}/toffy-stage
 
       - name: Install dependencies
+        # Same list as the staging job, for the same reason: no `libboost-all-dev`,
+        # so no Boost.Log in the image to satisfy a dependency nobody declared.
         run: |
           set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake build-essential pkg-config git \
-            libboost-all-dev libboost-system-dev libboost-filesystem-dev \
+            libboost-dev libboost-system-dev libboost-filesystem-dev \
             libboost-program-options-dev libboost-date-time-dev \
             libboost-serialization-dev libboost-chrono-dev \
             liblog4cplus-dev \
